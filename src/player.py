@@ -386,7 +386,7 @@ class Player(BinPlayer, QueuePlayer, UserPlaylistPlayer, RadioPlayer,
                     url = radios.get_url(name)
                     track.set_radio(name, url)
                     self.load(track)
-                elif Lp().tracks.get_path(track_id) != "":
+                elif Lp().tracks.get_uri(track_id) != "":
                     track = Track(track_id)
                     if Lp().notify is not None:
                         Lp().notify.inhibit()

@@ -214,6 +214,7 @@ class AlbumArt(BaseArt, TagReader):
             save_to_tags = Lp().settings.get_value('artwork-tags') and\
                 which("kid3-cli") is not None
             album = Album(album_id)
+
             path_count = Lp().albums.get_path_count(album.path)
             filename = self.__get_album_cache_name(album) + ".jpg"
             if save_to_tags:
@@ -227,7 +228,7 @@ class AlbumArt(BaseArt, TagReader):
                 artpath = os.path.join(album.path, filename)
                 if os.path.exists(os.path.join(album.path, self.__favorite)):
                     os.remove(os.path.join(album.path, self.__favorite))
-            elif is_readonly(album.path):
+            elif album.path == "" or is_readonly(album.path):
                 artpath = os.path.join(self._STORE_PATH, filename)
             else:
                 artpath = os.path.join(album.path, self.__favorite)

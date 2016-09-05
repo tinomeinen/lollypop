@@ -55,7 +55,7 @@ class Database:
                                                 genre_id INT NOT NULL)'''
     __create_tracks = '''CREATE TABLE tracks (id INTEGER PRIMARY KEY,
                                               name TEXT NOT NULL,
-                                              filepath TEXT NOT NULL,
+                                              uri TEXT NOT NULL,
                                               duration INT,
                                               tracknumber INT,
                                               discnumber INT,
@@ -64,7 +64,9 @@ class Database:
                                               year INT,
                                               popularity INT NOT NULL,
                                               ltime INT NOT NULL,
-                                              mtime INT NOT NULL)'''
+                                              mtime INT NOT NULL,
+                                              persistent INT NOT NULL
+                                              DEFAULT 1)'''
     __create_track_artists = '''CREATE TABLE track_artists (
                                                 track_id INT NOT NULL,
                                                 artist_id INT NOT NULL)'''

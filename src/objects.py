@@ -11,7 +11,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import GLib
 
 from lollypop.radios import Radios
 from lollypop.define import Lp, Type
@@ -238,8 +237,8 @@ class Track(Base):
     """
     FIELDS = ['name', 'album_id', 'album_artist_ids',
               'artist_ids', 'album_name', 'artists',
-              'genres', 'duration', 'number', 'path', 'position', 'year']
-    DEFAULTS = ['', None, [], [], '', '', '', 0.0, None, '', 0, None]
+              'genres', 'duration', 'number', 'position', 'year']
+    DEFAULTS = ['', None, [], [], '', '', '', 0.0, None, 0, None]
 
     def __init__(self, track_id=None):
         """
@@ -283,12 +282,9 @@ class Track(Base):
             Get track file uri
             @return str
         """
-        if self._uri is not None:
-            return self._uri
-        elif self.path != '':
-            return GLib.filename_to_uri(self.path)
-        else:
-            return self.path
+        if self._uri is None:
+            self._uri = Lp().tracks.get_uri(self.id)
+        return self._uri
 
     @property
     def filepath(self):
@@ -331,10 +327,6 @@ class Track(Base):
             @param uri as string
         """
         self._uri = uri
-        try:
-            self.path = GLib.filename_from_uri(uri)[0]
-        except:
-            pass
 
     def set_radio(self, name, uri):
         """

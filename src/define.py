@@ -50,6 +50,12 @@ class SelectionMode:
     LIMITED = 1
 
 
+class DbPersistent:
+    NONE = 0
+    INTERNAL = 1
+    EXTERNAL = 2
+
+
 class OpenLink:
     NONE = 0
     OPEN = 1

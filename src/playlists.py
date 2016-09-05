@@ -44,7 +44,7 @@ class Playlists(GObject.GObject):
 
     __create_tracks = '''CREATE TABLE tracks (
                         playlist_id INT NOT NULL,
-                        filepath TEXT NOT NULL)'''
+                        uri TEXT NOT NULL)'''
 
     def __init__(self):
         """
@@ -154,7 +154,7 @@ class Playlists(GObject.GObject):
             @return array of paths as [str]
         """
         with SqlCursor(self) as sql:
-            result = sql.execute("SELECT filepath\
+            result = sql.execute("SELECT uri\
                                   FROM tracks\
                                   WHERE playlist_id=?", (playlist_id,))
             return list(itertools.chain(*result))
@@ -170,8 +170,8 @@ class Playlists(GObject.GObject):
             result = sql.execute("SELECT music.tracks.rowid\
                                   FROM tracks, music.tracks\
                                   WHERE tracks.playlist_id=?\
-                                  AND music.tracks.filepath=\
-                                  main.tracks.filepath",
+                                  AND music.tracks.uri=\
+                                  main.tracks.uri",
                                  (playlist_id,))
             return list(itertools.chain(*result))
 
@@ -279,7 +279,7 @@ class Playlists(GObject.GObject):
         with SqlCursor(self) as sql:
             for track in tracks:
                 sql.execute("DELETE FROM tracks\
-                             WHERE filepath=?\
+                             WHERE uri=?\
                              AND playlist_id=?", (track.path, playlist_id))
                 if notify:
                     GLib.idle_add(self.emit, 'playlist-del',
@@ -308,12 +308,12 @@ class Playlists(GObject.GObject):
             @return bool
         """
         with SqlCursor(self) as sql:
-            result = sql.execute("SELECT main.tracks.filepath\
+            result = sql.execute("SELECT main.tracks.uri\
                                   FROM tracks, music.tracks\
                                   WHERE music.tracks.rowid=?\
                                   AND playlist_id=?\
-                                  AND music.tracks.filepath=\
-                                  main.tracks.filepath",
+                                  AND music.tracks.uri=\
+                                  main.tracks.uri",
                                  (track_id, playlist_id))
             v = result.fetchone()
             if v is not None:

@@ -104,16 +104,17 @@ class CollectionScanner(GObject.GObject, TagReader):
                     track_dirs.append(os.path.join(root, d))
                 # Add files
                 for name in files:
-                    filepath = os.path.join(root, name)
+                    path = os.path.join(root, name)
+                    uri = GLib.filename_to_uri(path)
                     try:
-                        f = Gio.File.new_for_path(filepath)
+                        f = Gio.File.new_for_uri(uri)
                         if is_pls(f):
                             pass
                         elif is_audio(f):
-                            tracks.append(filepath)
+                            tracks.append(uri)
                             count += 1
                         else:
-                            debug("%s not detected as a music file" % filepath)
+                            debug("%s not detected as a music file" % uri)
                     except Exception as e:
                         print("CollectionScanner::__get_objects_for_paths: %s"
                               % e)
@@ -146,7 +147,7 @@ class CollectionScanner(GObject.GObject, TagReader):
         if self.__history is None:
             self.__history = History()
         mtimes = Lp().tracks.get_mtimes()
-        orig_tracks = Lp().tracks.get_paths()
+        orig_tracks = Lp().tracks.get_uris()
         was_empty = len(orig_tracks) == 0
 
         (new_tracks, new_dirs, count) = self.__get_objects_for_paths(paths)
@@ -159,33 +160,33 @@ class CollectionScanner(GObject.GObject, TagReader):
 
         with SqlCursor(Lp().db) as sql:
             i = 0
-            for filepath in new_tracks:
+            for uri in new_tracks:
                 if self.__thread is None:
                     return
                 GLib.idle_add(self.__update_progress, i, count)
                 try:
                     # If songs exists and mtime unchanged, continue,
                     # else rescan
-                    if filepath in orig_tracks:
-                        orig_tracks.remove(filepath)
+                    if uri in orig_tracks:
+                        orig_tracks.remove(uri)
                         i += 1
-                        mtime = int(os.path.getmtime(filepath))
-                        if mtime <= mtimes[filepath]:
+                        mtime = int(os.path.getmtime(uri))
+                        if mtime <= mtimes[uri]:
                             i += 1
                             continue
                         else:
-                            self.__del_from_db(filepath)
-                    info = self.get_info(filepath)
+                            self.__del_from_db(uri)
+                    info = self.get_info(uri)
                     # On first scan, use modification time
                     # Else, use current time
                     if was_empty:
-                        mtime = int(os.path.getmtime(filepath))
+                        mtime = int(os.path.getmtime(uri))
                     else:
                         mtime = int(time())
-                    debug("Adding file: %s" % filepath)
-                    self.__add2db(filepath, info, mtime)
+                    debug("Adding file: %s" % uri)
+                    self.__add2db(uri, info, mtime)
                 except GLib.GError as e:
-                    print(e, filepath)
+                    print(e, uri)
                     if e.message != gst_message:
                         gst_message = e.message
                         if Lp().notify is not None:
@@ -195,20 +196,20 @@ class CollectionScanner(GObject.GObject, TagReader):
                 i += 1
 
             # Clean deleted files
-            for filepath in orig_tracks:
+            for uri in orig_tracks:
                 i += 1
                 GLib.idle_add(self.__update_progress, i, count)
-                self.__del_from_db(filepath)
+                self.__del_from_db(uri)
 
             sql.commit()
         GLib.idle_add(self.__finish)
         del self.__history
         self.__history = None
 
-    def __add2db(self, filepath, info, mtime):
+    def __add2db(self, uri, info, mtime):
         """
             Add new file to db with informations
-            @param filepath as string
+            @param uri as string
             @param info as GstPbutils.DiscovererInfo
             @param mtime as int
             @return track id as int
@@ -216,7 +217,7 @@ class CollectionScanner(GObject.GObject, TagReader):
         debug("CollectionScanner::add2db(): Read tags")
         tags = info.get_tags()
 
-        title = self.get_title(tags, filepath)
+        title = self.get_title(tags, uri)
         artists = self.get_artists(tags)
         composers = self.get_composers(tags)
         performers = self.get_performers(tags)
@@ -227,10 +228,10 @@ class CollectionScanner(GObject.GObject, TagReader):
         genres = self.get_genres(tags)
         discnumber = self.get_discnumber(tags)
         discname = self.get_discname(tags)
-        tracknumber = self.get_tracknumber(tags, GLib.basename(filepath))
+        tracknumber = self.get_tracknumber(tags, GLib.basename(uri))
         year = self.get_year(tags)
         duration = int(info.get_duration()/1000000000)
-        name = GLib.path_get_basename(filepath)
+        name = GLib.path_get_basename(uri)
 
         # If no artists tag, use album artist
         if artists == '':
@@ -266,13 +267,13 @@ class CollectionScanner(GObject.GObject, TagReader):
         debug("CollectionScanner::add2db(): Add album: "
               "%s, %s" % (album_name, album_artist_ids))
         (album_id, new_album) = self.add_album(album_name, album_artist_ids,
-                                               filepath, album_pop, amtime)
+                                               uri, album_pop, amtime)
 
         (genre_ids, new_genre_ids) = self.add_genres(genres, album_id)
 
         # Add track to db
         debug("CollectionScanner::add2db(): Add track")
-        track_id = Lp().tracks.add(title, filepath, duration,
+        track_id = Lp().tracks.add(title, uri, duration,
                                    tracknumber, discnumber, discname,
                                    album_id, year, track_pop,
                                    track_ltime, mtime)
@@ -290,13 +291,13 @@ class CollectionScanner(GObject.GObject, TagReader):
                 GLib.idle_add(self.emit, 'artist-added', artist_id, album_id)
         return track_id
 
-    def __del_from_db(self, filepath):
+    def __del_from_db(self, uri):
         """
             Delete track from db
-            @param filepath as str
+            @param uri as str
         """
-        name = GLib.path_get_basename(filepath)
-        track_id = Lp().tracks.get_id_by_path(filepath)
+        name = GLib.path_get_basename(uri)
+        track_id = Lp().tracks.get_id_by_path(uri)
         album_id = Lp().tracks.get_album_id(track_id)
         genre_ids = Lp().tracks.get_genre_ids(track_id)
         album_artist_ids = Lp().albums.get_artist_ids(album_id)
