@@ -304,13 +304,20 @@ class SearchPopover(Gtk.Popover):
 #######################
 # PRIVATE             #
 #######################
+    def __clear(self):
+        """
+            Clear search view
+            @warning not thread safe
+        """
+        for child in self.__view.get_children():
+            child.destroy()
+
     def __populate(self):
         """
             Populate searching items
             in db based on text entry current text
         """
-        for child in self.__view.get_children():
-            GLib.idle_add(child.destroy)
+        GLib.idle_add(self.__clear)
 
         # Network Search
         t = Thread(target=self.__network_search)
