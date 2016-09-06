@@ -168,6 +168,9 @@ class SearchRow(Gtk.ListBoxRow):
             t = Thread(target=self.__download_cover)
             t.daemon = True
             t.start()
+            surface = Lp().art.get_default_icon('emblem-music-symbolic',
+                                                ArtSize.MEDIUM,
+                                                self.get_scale_factor())
         else:
             if self.__item.is_track:
                 self.__name.set_text("♫ " + Track(self.__item.id).name)
@@ -178,8 +181,8 @@ class SearchRow(Gtk.ListBoxRow):
             surface = Lp().art.get_album_artwork(Album(album_id),
                                                  ArtSize.MEDIUM,
                                                  self.get_scale_factor())
-            self.__cover.set_from_surface(surface)
-            del surface
+        self.__cover.set_from_surface(surface)
+        del surface
         self.__artist.set_text(", ".join(artists))
 
     def __download_cover(self):
