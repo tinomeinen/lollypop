@@ -37,6 +37,7 @@ class SearchRow(Gtk.ListBoxRow):
         """
         Gtk.ListBoxRow.__init__(self)
         self.__item = item
+        self.__uri_set = False
         builder = Gtk.Builder()
         if internal:
             builder.add_from_resource(
@@ -208,7 +209,9 @@ class SearchRow(Gtk.ListBoxRow):
             @param yt as Youtube
             @param track id as int
         """
-        Lp().player.load(Track(track_id))
+        if not self.__uri_set:
+            self.__uri_set = True
+            Lp().player.load(Track(track_id))
 
     def __on_query_tooltip(self, widget, x, y, keyboard, tooltip):
         """

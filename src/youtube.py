@@ -130,6 +130,7 @@ class Youtube(GObject.GObject):
             GLib.idle_add(self.emit, 'uri-set', track_id)
         except Exception as e:
             print("Youtube::__get_youtube_uri()", e)
+            GLib.idle_add(self.__del_from_db, track_id)
 
     def __get_youtube_id(self, item):
         """
