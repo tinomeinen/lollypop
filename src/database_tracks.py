@@ -133,18 +133,6 @@ class TracksDatabase:
                 return v[0]
             return None
 
-    def get_ids_by_uri(self, uri):
-        """
-            Return track id for uri
-            @param uri as str
-            @return track id as int
-        """
-        with SqlCursor(Lp().db) as sql:
-            result = sql.execute("SELECT rowid FROM tracks\
-                                  WHERE uri like ?",
-                                 ('%' + uri + '%',))
-            return list(itertools.chain(*result))
-
     def get_id_by(self, name, album_id):
         """
             Return track id for uri

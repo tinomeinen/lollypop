@@ -40,6 +40,39 @@ class Youtube(GObject.GObject):
             Save item into collection as track
             @param item as SearchItem
             @param persistent as DbPersistent
+            @return (album id as int, track id as int)
+        """
+        (album_id, track_id) = self.__save_track(item, persistent)
+        t = Thread(target=self.__save_cover, args=(item, album_id,))
+        t.daemon = True
+        t.start()
+        if Lp().settings.get_value('artist-artwork'):
+            Lp().art.cache_artists_info()
+        return (album_id, track_id)
+
+    def save_album(self, item, persistent):
+        """
+            Save item into collection as album
+            @param item as SearchItem
+            @param persistent as DbPersistent
+        """
+        for track_item in item.subitems:
+            (album_id, track_id) = self.__save_track(track_item, persistent)
+        t = Thread(target=self.__save_cover, args=(item, album_id))
+        t.daemon = True
+        t.start()
+        if Lp().settings.get_value('artist-artwork'):
+            Lp().art.cache_artists_info()
+
+#######################
+# PRIVATE             #
+#######################
+    def __save_track(self, item, persistent):
+        """
+            Save item into collection as track
+            @param item as SearchItem
+            @param persistent as DbPersistent
+            @return (album id as int, track id as int)
         """
         t = TagReader()
         artists = "; ".join(item.artists)
@@ -71,26 +104,11 @@ class Youtube(GObject.GObject):
             for artist_id in new_artist_ids:
                 GLib.idle_add(Lp().scanner.emit, 'artist-added',
                               artist_id, album_id)
-        t = Thread(target=self.__save_cover, args=(item, album_id,))
-        t.daemon = True
-        t.start()
         t = Thread(target=self.__set_youtube_uri, args=(item, track_id,))
         t.daemon = True
         t.start()
-        if Lp().settings.get_value('artist-artwork'):
-            Lp().art.cache_artists_info()
+        return (album_id, track_id)
 
-    def save_album(self, item, persistent):
-        """
-            Save item into collection as album
-            @param item as SearchItem
-            @param persistent as DbPersistent
-        """
-        pass
-
-#######################
-# PRIVATE             #
-#######################
     def __set_youtube_uri(self, item, track_id):
         """
             Get youtube uri
@@ -98,6 +116,9 @@ class Youtube(GObject.GObject):
             @param track id as int
         """
         youtube_id = self.__get_youtube_id(item)
+        if youtube_id is None:
+            GLib.idle_add(self.__del_from_db, track_id)
+            return
         argv = ["youtube-dl", "-g", "-f", "bestaudio",
                 "https://www.youtube.com/watch?v=%s" % youtube_id, None]
         try:
@@ -115,9 +136,8 @@ class Youtube(GObject.GObject):
             Get youtube id
             @param item as SearchItem
         """
-        search = "%s %s %s" % (item.name,
-                               " ".join(item.artists),
-                               item.album)
+        search = "%s %s" % (" ".join(item.artists),
+                            item.name)
         key = "AIzaSyBiaYluG8pVYxgKRGcc4uEbtgE9q8la0dw"
         cx = "015987506728554693370:waw3yqru59a"
         try:
@@ -145,3 +165,24 @@ class Youtube(GObject.GObject):
         (status, data, tag) = f.load_contents(None)
         if status:
             Lp().art.save_album_artwork(data, album_id)
+
+    def __del_from_db(self, track_id):
+        """
+            Delete track from db
+            @param track id as int
+        """
+        album_id = Lp().tracks.get_album_id(track_id)
+        genre_ids = Lp().tracks.get_genre_ids(track_id)
+        album_artist_ids = Lp().albums.get_artist_ids(album_id)
+        artist_ids = Lp().tracks.get_artist_ids(track_id)
+        Lp().tracks.remove(track_id)
+        Lp().tracks.clean(track_id)
+        modified = Lp().albums.clean(album_id)
+        for artist_id in album_artist_ids + artist_ids:
+            Lp().artists.clean(artist_id)
+        for genre_id in genre_ids:
+            Lp().genres.clean(genre_id)
+        with SqlCursor(Lp().db) as sql:
+            sql.commit()
+        if modified:
+            GLib.idle_add(Lp().scanner.emit, 'album-update', album_id)

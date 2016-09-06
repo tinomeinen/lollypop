@@ -319,7 +319,7 @@ class SearchPopover(Gtk.Popover):
         added_album_ids = []
         added_track_ids = []
         search_items = [self.__current_search]
-        search_items += self.__current_search.split()
+        # search_items += self.__current_search.split()
         for item in search_items:
             albums = []
             tracks_non_album_artist = []
@@ -375,7 +375,7 @@ class SearchPopover(Gtk.Popover):
         """
         saved_search = self.__current_search
         search_items = [self.__current_search]
-        search_items += self.__current_search.split()
+        # search_items += self.__current_search.split()
         return_items = []
         search = NetworkSearch()
 
