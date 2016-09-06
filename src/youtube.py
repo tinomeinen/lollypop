@@ -77,6 +77,8 @@ class Youtube(GObject.GObject):
         t = Thread(target=self.__set_youtube_uri, args=(item, track_id,))
         t.daemon = True
         t.start()
+        if Lp().settings.get_value('artist-artwork'):
+            Lp().art.cache_artists_info()
 
     def save_album(self, item, persistent):
         """

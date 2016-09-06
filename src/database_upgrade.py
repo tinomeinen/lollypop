@@ -209,20 +209,16 @@ class DatabaseUpgrade:
         dumb = DumbPlaylists()
         SqlCursor.add(dumb)
         with SqlCursor(dumb) as sql:
-            try:
-                print('plop')
-                sql.execute("ALTER TABLE tracks RENAME TO tmp_tracks")
-                sql.execute('''CREATE TABLE tracks (playlist_id INT NOT NULL,
-                                                    uri TEXT NOT NULL)''')
-                sql.execute('''INSERT INTO tracks(playlist_id, uri) SELECT
-                                playlist_id, filepath FROM tmp_tracks''')
-                sql.execute("DROP TABLE tmp_tracks")
-                result = sql.execute("SELECT uri FROM tracks")
-                for path in list(itertools.chain(*result)):
-                    if path.startswith("/"):
-                        uri = GLib.filename_to_uri(path)
-                        sql.execute("UPDATE tracks set uri=? WHERE uri=?",
-                                    (uri, path))
-                sql.commit()
-            except Exception as e:
-                print(e)
+            sql.execute("ALTER TABLE tracks RENAME TO tmp_tracks")
+            sql.execute('''CREATE TABLE tracks (playlist_id INT NOT NULL,
+                                                uri TEXT NOT NULL)''')
+            sql.execute('''INSERT INTO tracks(playlist_id, uri) SELECT
+                            playlist_id, filepath FROM tmp_tracks''')
+            sql.execute("DROP TABLE tmp_tracks")
+            result = sql.execute("SELECT uri FROM tracks")
+            for path in list(itertools.chain(*result)):
+                if path.startswith("/"):
+                    uri = GLib.filename_to_uri(path)
+                    sql.execute("UPDATE tracks set uri=? WHERE uri=?",
+                                (uri, path))
+            sql.commit()
