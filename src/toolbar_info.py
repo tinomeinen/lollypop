@@ -188,6 +188,7 @@ class ToolbarInfo(Gtk.Bin, InfosController):
         self._cover.hide()
         self._spinner.show()
         self._spinner.start()
+        self._infobox.show()
 
     def __on_realize(self, toolbar):
         """
