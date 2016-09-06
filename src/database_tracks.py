@@ -445,9 +445,24 @@ class TracksDatabase:
                                   ORDER BY ltime DESC LIMIT 100")
             return list(itertools.chain(*result))
 
+    def get_persistence(self, track_id):
+        """
+            Return track persistence
+            @param track id as int
+            @return int
+        """
+        with SqlCursor(Lp().db) as sql:
+            result = sql.execute("SELECT rowid FROM tracks\
+                                  WHERE persistent=?", (track_id,))
+            v = result.fetchone()
+            if v is not None:
+                return v[0]
+            return 0
+
     def get_non_persistent(self):
         """
             Return non persistent tracks
+            @return track ids as [int]
         """
         with SqlCursor(Lp().db) as sql:
             result = sql.execute("SELECT rowid FROM tracks\
