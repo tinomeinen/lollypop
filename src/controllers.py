@@ -259,8 +259,14 @@ class InfosController:
             self._cover.hide()
             return
 
+        # Stop spinner if running
+        self._spinner.hide()
+        self._spinner.stop()
+
         self._artist_label.set_text(", ".join(player.current_track.artists))
+        self._artist_label.show()
         self._title_label.set_text(player.current_track.title)
+        self._title_label.show()
 
         if player.current_track.id == Type.RADIOS:
             art = Lp().art.get_radio_artwork(
