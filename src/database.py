@@ -140,6 +140,7 @@ class Database:
             artist_ids = Lp().tracks.get_artist_ids(track_id)
             Lp().tracks.remove(track_id)
             Lp().tracks.clean(track_id)
+            Lp().albums.clean(album_id)
             for artist_id in album_artist_ids + artist_ids:
                 Lp().artists.clean(artist_id)
             for genre_id in genre_ids:

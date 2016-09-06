@@ -121,6 +121,7 @@ class SearchRow(Gtk.ListBoxRow):
             yt.save_track(self.__item, DbPersistent.EXTERNAL)
         else:
             yt.save_album(self.__item, DbPersistent.EXTERNAL)
+        self.destroy()
 
     def _on_playlist_clicked(self, button):
         """
