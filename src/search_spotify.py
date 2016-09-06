@@ -13,7 +13,6 @@
 from gi.repository import GLib, Gio
 
 from lollypop.search_item import SearchItem
-from lollypop.utils import debug
 
 import json
 
@@ -57,7 +56,7 @@ class SpotifySearch:
                         search_item.artists.append(artist['name'])
                     items.append(search_item)
         except Exception as e:
-            debug("SpotifySearch::tracks(): %s" % e)
+            print("SpotifySearch::tracks(): %s" % e)
         return items
 
     def albums(self, name):
@@ -66,7 +65,7 @@ class SpotifySearch:
             @param name as str
             @return albums as [SearchItem]
         """
-        items = []
+        album_items = []
         try:
             # Read album list
             formated = GLib.uri_escape_string(name, None, True).replace(
@@ -79,30 +78,34 @@ class SpotifySearch:
                 # For each album, get cover and tracks
                 for item in decode['albums']['items']:
                     album_item = SearchItem()
-                    album_item.name = ['name']
+                    album_item.name = item['name']
+                    album_item.is_track = False
                     album_item.cover = item['images'][0]['url']
+                    album_item.smallcover = item['images'][2]['url']
                     album_spotify_id = item['id']
-
                     s = Gio.File.new_for_uri("https://api.spotify.com/v1/"
                                              "albums/%s" % album_spotify_id)
                     (status, data, tag) = s.load_contents()
                     if status:
                         decode = json.loads(data.decode('utf-8'))
                         for item in decode['tracks']['items']:
-                            search_item = SearchItem()
-                            search_item.is_track = True
-                            search_item.name = item['name']
-                            search_item.album = item['album']['name']
-                            search_item.tracknumber = int(item['track_number'])
-                            search_item.discnumber = int(item['disc_number'])
-                            search_item.duration = int(item['duration_ms'])\
+                            track_item = SearchItem()
+                            track_item.is_track = True
+                            track_item.name = item['name']
+                            track_item.album = album_item.name
+                            track_item.tracknumber = int(item['track_number'])
+                            track_item.discnumber = int(item['disc_number'])
+                            track_item.duration = int(item['duration_ms'])\
                                 / 1000
                             for artist in item['artists']:
-                                search_item.artists.append(artist['name'])
-                    items.append(album_item)
+                                track_item.artists.append(artist['name'])
+                            if not album_item.artists:
+                                album_item.artists = track_item.artists
+                            album_item.subitems.append(track_item)
+                    album_items.append(album_item)
         except Exception as e:
-            debug("SpotifySearch::tracks(): %s" % e)
-        return items
+            print("SpotifySearch::albums(): %s" % e)
+        return album_items
 
 #######################
 # PRIVATE             #

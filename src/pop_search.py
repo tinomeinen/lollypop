@@ -373,13 +373,16 @@ class SearchPopover(Gtk.Popover):
         """
             Search on network
         """
-        return
         saved_search = self.__current_search
         search_items = [self.__current_search]
         search_items += self.__current_search.split()
         return_items = []
         search = NetworkSearch()
 
+        for item in search_items:
+            return_items = search.albums(item)
+        if saved_search == self.__current_search:
+            GLib.idle_add(self.__add_rows_external, return_items)
         for item in search_items:
             return_items = search.tracks(item)
         if saved_search == self.__current_search:

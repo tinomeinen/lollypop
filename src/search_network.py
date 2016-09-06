@@ -32,3 +32,12 @@ class NetworkSearch(SpotifySearch):
         """
         items = SpotifySearch.tracks(self, name)
         return items
+
+    def albums(self, name):
+        """
+            Return albums containing name
+            @param name as str
+            @return albums as [SearchItem]
+        """
+        items = SpotifySearch.albums(self, name)
+        return items
