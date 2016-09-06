@@ -252,6 +252,14 @@ class Track(Base):
         self._non_album_artists = []
 
     @property
+    def is_youtube(self):
+        """
+            True if a youtube stream
+            @return bool
+        """
+        return self.uri.startswith("https://www.youtube.com")
+
+    @property
     def non_album_artists(self):
         """
             Return non album artists

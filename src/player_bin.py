@@ -251,6 +251,24 @@ class BinPlayer(BasePlayer):
             return False
         return True
 
+    def _load_youtube(self, track):
+        """
+            Load track url and play it
+        """
+        argv = ["youtube-dl", "-g", "-f", "bestaudio", track.uri, None]
+        try:
+            (s, pid, i, o, err) = GLib.spawn_async_with_pipes(
+                                       None, argv, None,
+                                       GLib.SpawnFlags.SEARCH_PATH |
+                                       GLib.SpawnFlags.DO_NOT_REAP_CHILD, None)
+            io = GLib.IOChannel(o)
+            io.add_watch(GLib.IO_IN | GLib.IO_HUP,
+                         self.__play_gv_uri,
+                         track,
+                         priority=GLib.PRIORITY_HIGH)
+        except Exception as e:
+            print("Youtube::__get_youtube_uri()", e)
+
     def _scrobble(self, finished, finished_start_time):
         """
             Scrobble on lastfm
@@ -540,3 +558,14 @@ class BinPlayer(BasePlayer):
         if not Lp().scanner.is_locked():
             Lp().tracks.set_more_popular(finished.id)
             Lp().albums.set_more_popular(finished.album_id)
+
+    def __play_gv_uri(self, io, condition, track):
+        """
+            Play uri for io
+            @param io as GLib.IOChannel
+            @param condition as Constant
+            @param track as Track
+        """
+        track.set_uri(io.readline())
+        self.load(track)
+        return False

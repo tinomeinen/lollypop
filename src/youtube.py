@@ -55,22 +55,6 @@ class Youtube(GObject.GObject):
         t.daemon = True
         t.start()
 
-    def get_video_uri(self, uri):
-        """
-            Set youtube uri
-            @param uri as str/None
-        """
-        uri = None
-        argv = ["youtube-dl", "-g", "-f", "bestaudio", uri, None]
-        try:
-            (s, out, err, e) = GLib.spawn_sync(None, argv, None,
-                                               GLib.SpawnFlags.SEARCH_PATH,
-                                               None)
-            uri = out.decode('utf-8')
-        except Exception as e:
-            print("Youtube::__get_youtube_uri()", e)
-        return uri
-
 #######################
 # PRIVATE             #
 #######################

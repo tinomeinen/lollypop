@@ -109,6 +109,8 @@ class Player(BinPlayer, QueuePlayer, UserPlaylistPlayer, RadioPlayer,
                 Lp().window.pulse(False)
                 Lp().window.pulse(True)
             RadioPlayer.load(self, track)
+        elif track.is_youtube:
+            self._load_youtube(track)
         else:
             if play:
                 # Do not update next if user clicked on a track
