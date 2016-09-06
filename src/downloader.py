@@ -336,7 +336,7 @@ class Downloader:
                     print("Downloader::__cache_artists_info():", e)
                     InfoCache.add(artist, None, None, api)
             if artwork_set:
-                Lp().art.emit('artist-artwork-changed', artist)
+                GLib.idle_add(Lp().art.emit, 'artist-artwork-changed', artist)
         self.__cache_artists_running = False
 
     def __cache_albums_art(self):
