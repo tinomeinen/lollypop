@@ -24,6 +24,7 @@ class SearchItem:
         self.artists = []
         self.album = ""
         self.name = ""
-        self.artwork = None
         self.track_number = 0
         self.cover = ""
+        self.smallcover = ""
+        self.subitems = []

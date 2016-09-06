@@ -10,7 +10,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Gio, Gdk, GdkPixbuf
 
 from cgi import escape
 from threading import Thread
@@ -164,7 +164,9 @@ class SearchRow(Gtk.ListBoxRow):
             else:
                 self.__name.set_text(self.__item.name)
             artists = self.__item.artists
-            surface = self.__item.artwork
+            t = Thread(target=self.__download_cover)
+            t.daemon = True
+            t.start()
         else:
             if self.__item.is_track:
                 self.__name.set_text("♫ " + Track(self.__item.id).name)
@@ -175,9 +177,30 @@ class SearchRow(Gtk.ListBoxRow):
             surface = Lp().art.get_album_artwork(Album(album_id),
                                                  ArtSize.MEDIUM,
                                                  self.get_scale_factor())
-        self.__cover.set_from_surface(surface)
-        del surface
+            self.__cover.set_from_surface(surface)
+            del surface
         self.__artist.set_text(", ".join(artists))
+
+    def __download_cover(self):
+        """
+            Download cover in background
+        """
+        f = Gio.File.new_for_uri(self.__item.smallcover)
+        (status, data, tag) = f.load_contents(None)
+        if status:
+            stream = Gio.MemoryInputStream.new_from_data(data,
+                                                         None)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
+                                               stream,
+                                               ArtSize.MEDIUM,
+                                               -1,
+                                               True,
+                                               None)
+            surface = Gdk.cairo_surface_create_from_pixbuf(
+                       pixbuf, self.get_scale_factor(), None)
+            del pixbuf
+            GLib.idle_add(self.__cover.set_from_surface, surface)
+            del surface
 
     def __on_uri_set(self, yt, track_id):
         """
@@ -340,7 +363,6 @@ class SearchPopover(Gtk.Popover):
                 search_item.is_track = True
                 search_item.artist_ids = Lp().tracks.get_artist_ids(track_id)
                 results.append(search_item)
-
         if not self.__stop_thread:
             GLib.idle_add(self.__add_rows_internal, results)
         else:
@@ -351,11 +373,12 @@ class SearchPopover(Gtk.Popover):
         """
             Search on network
         """
+        return
         saved_search = self.__current_search
         search_items = [self.__current_search]
         search_items += self.__current_search.split()
         return_items = []
-        search = NetworkSearch(self.get_scale_factor())
+        search = NetworkSearch()
 
         for item in search_items:
             return_items = search.tracks(item)

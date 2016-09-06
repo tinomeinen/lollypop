@@ -10,11 +10,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import GLib, Gio, Gdk, GdkPixbuf
+from gi.repository import GLib, Gio
 
 from lollypop.search_item import SearchItem
 from lollypop.utils import debug
-from lollypop.define import ArtSize
 
 import json
 
@@ -23,12 +22,11 @@ class SpotifySearch:
     """
         Search provider for Spotify
     """
-    def __init__(self, scale):
+    def __init__(self):
         """
             Init provider
-            @param scale factor as int
         """
-        self.__scale = scale
+        pass
 
     def tracks(self, name):
         """
@@ -54,28 +52,54 @@ class SpotifySearch:
                     search_item.discnumber = int(item['disc_number'])
                     search_item.duration = int(item['duration_ms']) / 1000
                     search_item.cover = item['album']['images'][0]['url']
+                    search_item.smallcover = item['album']['images'][2]['url']
                     for artist in item['artists']:
                         search_item.artists.append(artist['name'])
-                    f = Gio.File.new_for_uri(
-                                         item['album']['images'][2]['url'])
-                    (status, data, tag) = f.load_contents(None)
-                    if status:
-                        stream = Gio.MemoryInputStream.new_from_data(data,
-                                                                     None)
-                        pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
-                                                           stream,
-                                                           ArtSize.MEDIUM,
-                                                           -1,
-                                                           True,
-                                                           None)
-                        surface = Gdk.cairo_surface_create_from_pixbuf(
-                                   pixbuf, self.__scale, None)
-                        del pixbuf
-                    else:
-                        surface = None
-                    search_item.artwork = surface
                     items.append(search_item)
-                    print(search_item.name, search_item.artists)
+        except Exception as e:
+            debug("SpotifySearch::tracks(): %s" % e)
+        return items
+
+    def albums(self, name):
+        """
+            Return albums containing name
+            @param name as str
+            @return albums as [SearchItem]
+        """
+        items = []
+        try:
+            # Read album list
+            formated = GLib.uri_escape_string(name, None, True).replace(
+                                                                      ' ', '+')
+            s = Gio.File.new_for_uri("https://api.spotify.com/v1/search?q=%s"
+                                     "&type=album" % formated)
+            (status, data, tag) = s.load_contents()
+            if status:
+                decode = json.loads(data.decode('utf-8'))
+                # For each album, get cover and tracks
+                for item in decode['albums']['items']:
+                    album_item = SearchItem()
+                    album_item.name = ['name']
+                    album_item.cover = item['images'][0]['url']
+                    album_spotify_id = item['id']
+
+                    s = Gio.File.new_for_uri("https://api.spotify.com/v1/"
+                                             "albums/%s" % album_spotify_id)
+                    (status, data, tag) = s.load_contents()
+                    if status:
+                        decode = json.loads(data.decode('utf-8'))
+                        for item in decode['tracks']['items']:
+                            search_item = SearchItem()
+                            search_item.is_track = True
+                            search_item.name = item['name']
+                            search_item.album = item['album']['name']
+                            search_item.tracknumber = int(item['track_number'])
+                            search_item.discnumber = int(item['disc_number'])
+                            search_item.duration = int(item['duration_ms'])\
+                                / 1000
+                            for artist in item['artists']:
+                                search_item.artists.append(artist['name'])
+                    items.append(album_item)
         except Exception as e:
             debug("SpotifySearch::tracks(): %s" % e)
         return items

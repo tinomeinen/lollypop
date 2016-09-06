@@ -18,12 +18,11 @@ class NetworkSearch(SpotifySearch):
         Search provider over network
     """
 
-    def __init__(self, scale):
+    def __init__(self):
         """
             Init provider
-            @param scale factor as int
         """
-        SpotifySearch.__init__(self, scale)
+        SpotifySearch.__init__(self)
 
     def tracks(self, name):
         """
