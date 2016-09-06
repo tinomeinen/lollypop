@@ -411,17 +411,6 @@ class TracksDatabase:
                         (current, track_id))
             sql.commit()
 
-    def set_uri(self, track_id, uri):
-        """
-            Set ltime for track
-            @param track id as int
-            @param uri as str
-        """
-        with SqlCursor(Lp().db) as sql:
-            sql.execute("UPDATE tracks set uri=? WHERE rowid=?",
-                        (uri, track_id))
-            sql.commit()
-
     def set_listened_at(self, track_id, time):
         """
             Set ltime for track

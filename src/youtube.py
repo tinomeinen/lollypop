@@ -55,18 +55,36 @@ class Youtube(GObject.GObject):
         t.daemon = True
         t.start()
 
+    def get_video_uri(self, uri):
+        """
+            Set youtube uri
+            @param uri as str/None
+        """
+        uri = None
+        argv = ["youtube-dl", "-g", "-f", "bestaudio", uri, None]
+        try:
+            (s, out, err, e) = GLib.spawn_sync(None, argv, None,
+                                               GLib.SpawnFlags.SEARCH_PATH,
+                                               None)
+            uri = out.decode('utf-8')
+        except Exception as e:
+            print("Youtube::__get_youtube_uri()", e)
+        return uri
+
 #######################
 # PRIVATE             #
 #######################
-    def save_album_thread(self, item, persistent):
+    def __save_album_thread(self, item, persistent):
         """
             Save item into collection as album
             @param item as SearchItem
             @param persistent as DbPersistent
         """
+        album_id = None
         for track_item in item.subitems:
             (album_id, track_id) = self.__save_track(track_item, persistent)
-        self.__save_cover(item, album_id)
+        if album_id is not None:
+            self.__save_cover(item, album_id)
         if Lp().settings.get_value('artist-artwork'):
             Lp().art.cache_artists_info()
 
@@ -88,29 +106,33 @@ class Youtube(GObject.GObject):
             @param persistent as DbPersistent
             @return (album id as int, track id as int)
         """
+        yid = self.__get_youtube_id(item)
+        if yid is None:
+            return
         t = TagReader()
-        artists = "; ".join(item.artists)
-        (artist_ids, new_artist_ids) = t.add_artists(artists,
-                                                     artists,
-                                                     "")
-        (album_artist_ids, new_album_artist_ids) = t.add_album_artists(
-                                                           artists,
-                                                           "")
-
-        (album_id, new_album) = t.add_album(item.album,
-                                            album_artist_ids,
-                                            "", 0, 0)
-
-        (genre_ids, new_genre_ids) = t.add_genres(_("Youtube"), album_id)
-
-        # Add track to db
-        track_id = Lp().tracks.add(item.name, "", item.duration,
-                                   0, item.discnumber, "",
-                                   album_id, None, 0, 0, persistent)
-        t.update_track(track_id, artist_ids, genre_ids)
-        t.update_album(album_id, album_artist_ids, genre_ids, None)
         with SqlCursor(Lp().db) as sql:
-                sql.commit()
+            artists = "; ".join(item.artists)
+            (artist_ids, new_artist_ids) = t.add_artists(artists,
+                                                         artists,
+                                                         "")
+            (album_artist_ids, new_album_artist_ids) = t.add_album_artists(
+                                                               artists,
+                                                               "")
+
+            (album_id, new_album) = t.add_album(item.album,
+                                                album_artist_ids,
+                                                "", 0, 0)
+
+            (genre_ids, new_genre_ids) = t.add_genres(_("Youtube"), album_id)
+
+            # Add track to db
+            uri = "https://www.youtube.com/watch?v=%s" % yid
+            track_id = Lp().tracks.add(item.name, uri, item.duration,
+                                       0, item.discnumber, "",
+                                       album_id, None, 0, 0, persistent)
+            t.update_track(track_id, artist_ids, genre_ids)
+            t.update_album(album_id, album_artist_ids, genre_ids, None)
+            sql.commit()
         # Notify about new artists/genres
         if new_genre_ids or new_artist_ids:
             for genre_id in new_genre_ids:
@@ -118,31 +140,7 @@ class Youtube(GObject.GObject):
             for artist_id in new_artist_ids:
                 GLib.idle_add(Lp().scanner.emit, 'artist-added',
                               artist_id, album_id)
-        self.__set_youtube_uri(item, track_id)
         return (album_id, track_id)
-
-    def __set_youtube_uri(self, item, track_id):
-        """
-            Get youtube uri
-            @param item as SearchItem
-            @param track id as int
-        """
-        youtube_id = self.__get_youtube_id(item)
-        if youtube_id is None:
-            GLib.idle_add(self.__del_from_db, track_id)
-            return
-        argv = ["youtube-dl", "-g", "-f", "bestaudio",
-                "https://www.youtube.com/watch?v=%s" % youtube_id, None]
-        try:
-            (s, out, err, e) = GLib.spawn_sync(None, argv, None,
-                                               GLib.SpawnFlags.SEARCH_PATH,
-                                               None)
-            url = out.decode('utf-8')
-            Lp().tracks.set_uri(track_id, url)
-            GLib.idle_add(self.emit, 'uri-set', track_id)
-        except Exception as e:
-            print("Youtube::__get_youtube_uri()", e)
-            GLib.idle_add(self.__del_from_db, track_id)
 
     def __get_youtube_id(self, item):
         """
