@@ -240,11 +240,17 @@ class BinPlayer(BasePlayer):
                 self._queue_track = track
                 self._queue.remove(track.id)
                 self.emit('queue-changed')
-                self._playbin.set_property('uri', self._queue_track.uri)
+                if self._queue_track.is_youtube:
+                    self._load_youtube(self._queue_track)
+                else:
+                    self._playbin.set_property('uri', self._queue_track.uri)
             else:
                 self._current_track = track
                 self._queue_track = None
-                self._playbin.set_property('uri', self.current_track.uri)
+                if self._current_track.is_youtube:
+                    self._load_youtube(self._current_track)
+                else:
+                    self._playbin.set_property('uri', self.current_track.uri)
         except Exception as e:  # Gstreamer error
             print("BinPlayer::_load_track(): ", e)
             self._queue_track = None
@@ -254,6 +260,7 @@ class BinPlayer(BasePlayer):
     def _load_youtube(self, track):
         """
             Load track url and play it
+            @param track as Track
         """
         argv = ["youtube-dl", "-g", "-f", "bestaudio", track.uri, None]
         try:
