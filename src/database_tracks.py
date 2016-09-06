@@ -32,7 +32,7 @@ class TracksDatabase:
         pass
 
     def add(self, name, uri, duration, tracknumber, discnumber, discname,
-            album_id, year, popularity, ltime, mtime, persistent=True):
+            album_id, year, popularity, ltime, mtime, persistent=1):
         """
             Add a new track to database
             @param name as string
@@ -47,7 +47,7 @@ class TracksDatabase:
             @param popularity as int
             @param ltime as int
             @param mtime as int
-            @param persistent as bool
+            @param persistent as int
             @return inserted rowid as int
             @warning: commit needed
         """
@@ -55,18 +55,19 @@ class TracksDatabase:
             result = sql.execute(
                 "INSERT INTO tracks (name, uri, duration, tracknumber,\
                 discnumber, discname, album_id,\
-                year, popularity, ltime, mtime) VALUES\
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name,
-                                                     uri,
-                                                     duration,
-                                                     tracknumber,
-                                                     discnumber,
-                                                     discname,
-                                                     album_id,
-                                                     year,
-                                                     popularity,
-                                                     ltime,
-                                                     mtime))
+                year, popularity, ltime, mtime, persistent) VALUES\
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name,
+                                                        uri,
+                                                        duration,
+                                                        tracknumber,
+                                                        discnumber,
+                                                        discname,
+                                                        album_id,
+                                                        year,
+                                                        popularity,
+                                                        ltime,
+                                                        mtime,
+                                                        persistent))
             return result.lastrowid
 
     def add_artist(self, track_id, artist_id):
@@ -442,6 +443,15 @@ class TracksDatabase:
             result = sql.execute("SELECT rowid FROM tracks\
                                   WHERE ltime!=0\
                                   ORDER BY ltime DESC LIMIT 100")
+            return list(itertools.chain(*result))
+
+    def get_non_persistent(self):
+        """
+            Return non persistent tracks
+        """
+        with SqlCursor(Lp().db) as sql:
+            result = sql.execute("SELECT rowid FROM tracks\
+                                  WHERE persistent=0")
             return list(itertools.chain(*result))
 
     def get_randoms(self):

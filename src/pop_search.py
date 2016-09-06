@@ -103,7 +103,6 @@ class SearchRow(Gtk.ListBoxRow):
             Play row
         """
         yt = Youtube()
-        yt.connect('uri-set', self.__on_uri_set)
         if self.__item.is_track:
             yt.save_track(self.__item, DbPersistent.NONE)
         else:
@@ -209,16 +208,6 @@ class SearchRow(Gtk.ListBoxRow):
         """
         self.__cover.set_from_surface(surface)
         del surface
-
-    def __on_uri_set(self, yt, track_id):
-        """
-            Play track
-            @param yt as Youtube
-            @param track id as int
-        """
-        if not self.__uri_set:
-            self.__uri_set = True
-            Lp().player.load(Track(track_id))
 
     def __on_query_tooltip(self, widget, x, y, keyboard, tooltip):
         """
