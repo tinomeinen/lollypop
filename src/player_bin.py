@@ -461,9 +461,10 @@ class BinPlayer(BasePlayer):
         """
         # Some radio streams send message tag every seconds!
         changed = False
-        if self.current_track.persistence == DbPersistent.INTERNAL and\
-                (self.current_track.id >= 0 or
-                 self.current_track.duration > 0.0):
+        if (self.current_track.persistence == DbPersistent.INTERNAL or
+            self.current_track.mtime != 0) and\
+            (self.current_track.id >= 0 or
+             self.current_track.duration > 0.0):
             return
         debug("Player::__on_bus_message_tag(): %s" % self.current_track.uri)
         reader = TagReader()
@@ -475,6 +476,8 @@ class BinPlayer(BasePlayer):
                          self.current_track.uri).get_duration() / 1000000000
             if duration != self.current_track.duration:
                 Lp().tracks.set_duration(self.current_track.id, duration)
+                # We modify mtime to be sure not looking for tags again
+                Lp().tracks.set_mtime(self.current_track.id, 1)
                 self.current_track.set_duration(duration)
                 self.emit('current-changed')
 

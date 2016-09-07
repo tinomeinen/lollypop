@@ -249,8 +249,8 @@ class Track(Base):
     """
     FIELDS = ['name', 'album_id', 'album_artist_ids',
               'artist_ids', 'genre_ids', 'album_name', 'artists',
-              'duration', 'number', 'position', 'year', 'persistence']
-    DEFAULTS = ['', None, [], [], [], '', '', 0.0, None, 0, None, 1]
+              'duration', 'number', 'position', 'year', 'persistence', 'mtime']
+    DEFAULTS = ['', None, [], [], [], '', '', 0.0, None, 0, None, 1, 0]
 
     def __init__(self, track_id=None):
         """

@@ -549,7 +549,7 @@ class TracksDatabase:
         """
             Get modification time
             @param track id  as int
-            @return popularity as int
+            @return mtime as int
         """
         with SqlCursor(Lp().db) as sql:
             result = sql.execute("SELECT mtime FROM tracks WHERE\
@@ -558,6 +558,18 @@ class TracksDatabase:
             if v is not None:
                 return v[0]
             return 0
+
+    def set_mtime(self, track_id, mtime):
+        """
+            Get modification time
+            @param track id  as int
+            @param mtime as int
+        """
+        with SqlCursor(Lp().db) as sql:
+            sql.execute("UPDATE tracks\
+                         SET mtime=?\
+                         WHERE rowid=?", (mtime, track_id))
+            sql.commit()
 
     def count(self):
         """
