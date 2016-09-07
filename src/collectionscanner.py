@@ -31,9 +31,11 @@ class CollectionScanner(GObject.GObject, TagReader):
     """
     __gsignals__ = {
         'scan-finished': (GObject.SignalFlags.RUN_FIRST, None, ()),
-        'artist-added': (GObject.SignalFlags.RUN_FIRST, None, (int, int)),
-        'genre-added': (GObject.SignalFlags.RUN_FIRST, None, (int,)),
-        'album-update': (GObject.SignalFlags.RUN_FIRST, None, (int,))
+        'artist-updated': (GObject.SignalFlags.RUN_FIRST, None, (int,
+                                                                 int,
+                                                                 bool)),
+        'genre-updated': (GObject.SignalFlags.RUN_FIRST, None, (int, bool)),
+        'album-updated': (GObject.SignalFlags.RUN_FIRST, None, (int,))
     }
 
     def __init__(self):
@@ -285,9 +287,10 @@ class CollectionScanner(GObject.GObject, TagReader):
             with SqlCursor(Lp().db) as sql:
                 sql.commit()
             for genre_id in new_genre_ids:
-                GLib.idle_add(self.emit, 'genre-added', genre_id)
+                GLib.idle_add(self.emit, 'genre-updated', genre_id, True)
             for artist_id in new_artist_ids:
-                GLib.idle_add(self.emit, 'artist-added', artist_id, album_id)
+                GLib.idle_add(self.emit, 'artist-updated',
+                              artist_id, album_id, True)
         return track_id
 
     def __del_from_db(self, uri):
@@ -315,8 +318,12 @@ class CollectionScanner(GObject.GObject, TagReader):
         if modified:
             with SqlCursor(Lp().db) as sql:
                 sql.commit()
-            GLib.idle_add(self.emit, 'album-update', album_id)
+            GLib.idle_add(self.emit, 'album-updated', album_id)
         for artist_id in album_artist_ids + artist_ids:
-            Lp().artists.clean(artist_id)
+            ret = Lp().artists.clean(artist_id)
+            if ret:
+                GLib.idle_add(self.emit, 'artist-updated', artist_id, False)
         for genre_id in genre_ids:
-            Lp().genres.clean(genre_id)
+            ret = Lp().genres.clean(genre_id)
+            if ret:
+                GLib.idle_add(self.emit, 'genre-updated', genre_id, False)

@@ -565,14 +565,17 @@ class AlbumMenuPopover(Gtk.Popover):
         genre_id = Lp().genres.get_id(genre)
         if genre_id is None:
             genre_id = Lp().genres.add(genre)
-            Lp().scanner.emit('genre-added', genre_id)
+            Lp().scanner.emit('genre-updated', genre_id, True)
         Lp().albums.del_genres(album.id)
         Lp().albums.add_genre(album.id, genre_id)
         for track_id in album.track_ids:
             Lp().tracks.del_genres(track_id)
             Lp().tracks.add_genre(track_id, genre_id)
         for genre_id in orig_genre_ids:
-            Lp().genres.clean(genre_id)
+            ret = Lp().genres.clean(genre_id)
+            if ret:
+                GLib.idle_add(Lp().scanner.emit, 'genre-updated',
+                              genre_id, False)
         with SqlCursor(Lp().db) as sql:
             sql.commit()
-        Lp().scanner.emit('album-update', album.id)
+        Lp().scanner.emit('album-updated', album.id)

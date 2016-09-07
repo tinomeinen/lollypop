@@ -49,8 +49,8 @@ class AlbumWidget:
         self._overlay_orientation = Gtk.Orientation.HORIZONTAL
         self._squared_class = "squared-icon"
         self._rounded_class = "rounded-icon"
-        self._scan_signal = Lp().scanner.connect('album-update',
-                                                 self.__on_album_update)
+        self._scan_signal = Lp().scanner.connect('album-updated',
+                                                 self.__on_album_updated)
         self.connect('destroy', self.__on_destroy)
 
     def set_cover(self):
@@ -359,7 +359,7 @@ class AlbumWidget:
         if self._scan_signal is not None:
             Lp().scanner.disconnect(self._scan_signal)
 
-    def __on_album_update(self, scanner, album_id):
+    def __on_album_updated(self, scanner, album_id):
         """
             On album modified, disable it
             @param scanner as CollectionScanner
