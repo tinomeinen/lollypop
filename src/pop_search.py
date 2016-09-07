@@ -81,6 +81,13 @@ class SearchRow(Gtk.ListBoxRow):
         """
         return self.__item.is_track
 
+    @property
+    def cover_uri(self):
+        """
+            Return cover uri
+        """
+        return self.__item.smallcover
+
     def exists(self, items):
         """
             Return True if self exists in items
@@ -107,6 +114,18 @@ class SearchRow(Gtk.ListBoxRow):
             yt.save_track(self.__item, DbPersistent.NONE)
         else:
             yt.save_album(self.__item, DbPersistent.NONE)
+
+    def set_cover(self, pixbuf):
+        """
+            Set cover
+            @param pixbuf as GdkPixbuf.Pixbuf
+        """
+        surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf,
+                                                       self.get_scale_factor(),
+                                                       None)
+        del pixbuf
+        self.__cover.set_from_surface(surface)
+        del surface
 
 #######################
 # PROTECTED           #
@@ -165,9 +184,6 @@ class SearchRow(Gtk.ListBoxRow):
             else:
                 self.__name.set_text(self.__item.name)
             artists = self.__item.artists
-            t = Thread(target=self.__download_cover)
-            t.daemon = True
-            t.start()
             surface = Lp().art.get_default_icon('emblem-music-symbolic',
                                                 ArtSize.MEDIUM,
                                                 self.get_scale_factor())
@@ -184,35 +200,6 @@ class SearchRow(Gtk.ListBoxRow):
         self.__cover.set_from_surface(surface)
         del surface
         self.__artist.set_text(", ".join(artists))
-
-    def __download_cover(self):
-        """
-            Download cover in background
-        """
-        f = Gio.File.new_for_uri(self.__item.smallcover)
-        (status, data, tag) = f.load_contents(None)
-        if status:
-            stream = Gio.MemoryInputStream.new_from_data(data,
-                                                         None)
-            pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
-                                               stream,
-                                               ArtSize.MEDIUM,
-                                               -1,
-                                               True,
-                                               None)
-            GLib.idle_add(self.__set_cover, pixbuf)
-
-    def __set_cover(self, pixbuf):
-        """
-            Set cover
-            @param pixbuf as GdkPixbuf.Pixbuf
-        """
-        surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf,
-                                                       self.get_scale_factor(),
-                                                       None)
-        del pixbuf
-        self.__cover.set_from_surface(surface)
-        del surface
 
     def __on_query_tooltip(self, widget, x, y, keyboard, tooltip):
         """
@@ -422,6 +409,9 @@ class SearchPopover(Gtk.Popover):
             self.__stop_thread = False
             self.__spinner.stop()
             self.__stack.set_visible_child(self.__new_btn)
+            t = Thread(target=self.__download_covers)
+            t.daemon = True
+            t.start()
 
     def __add_rows_internal(self, results):
         """
@@ -441,6 +431,31 @@ class SearchPopover(Gtk.Popover):
         else:
             self.__in_thread = False
             self.__stop_thread = False
+
+    def __download_covers(self):
+        """
+            Download row covers
+        """
+        for row in self.__view.get_children():
+            if self.__stop_thread:
+                self.__in_thread = False
+                self.__stop_thread = False
+                return
+            try:
+                f = Gio.File.new_for_uri(row.cover_uri)
+                (status, data, tag) = f.load_contents(None)
+                if status:
+                    stream = Gio.MemoryInputStream.new_from_data(data,
+                                                                 None)
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
+                                                       stream,
+                                                       ArtSize.MEDIUM,
+                                                       -1,
+                                                       True,
+                                                       None)
+                    GLib.idle_add(row.set_cover, pixbuf)
+            except:
+                pass
 
     def __populate_user_playlist_by_tracks(self, track_ids, track_id):
         """
