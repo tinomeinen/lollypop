@@ -264,6 +264,9 @@ class SearchPopover(Gtk.Popover):
         self.__view.set_activate_on_single_click(True)
         self.__view.show()
 
+        self.__spinner = builder.get_object('spinner')
+        self.__stack = builder.get_object('stack')
+
         builder.get_object('scrolled').add(self.__view)
         self.add(builder.get_object('widget'))
 
@@ -417,6 +420,8 @@ class SearchPopover(Gtk.Popover):
         else:
             self.__in_thread = False
             self.__stop_thread = False
+            self.__spinner.stop()
+            self.__stack.set_visible_child(self.__new_btn)
 
     def __add_rows_internal(self, results):
         """
@@ -517,6 +522,8 @@ class SearchPopover(Gtk.Popover):
         """
         self.__timeout = None
         self.__in_thread = True
+        self.__stack.set_visible_child(self.__spinner)
+        self.__spinner.start()
         t = Thread(target=self.__populate)
         t.daemon = True
         t.start()
