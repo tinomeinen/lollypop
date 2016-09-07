@@ -127,15 +127,6 @@ class Player(BinPlayer, QueuePlayer, UserPlaylistPlayer, RadioPlayer,
             @param album as Album
         """
         self.shuffle_albums(False)
-        # Add album to main playlist if nothing playing
-        # Do not start to play
-        if not self._albums and self._current_track.id is None:
-                self.load(album.tracks[0], False)
-                self._albums = [self._current_track.album.id]
-                self._context.genre_ids[self._current_track.album.id] = []
-                self._context.artist_ids[self._current_track.album.id] = []
-                self._user_playlist = []
-                self._user_playlist_ids = []
         # If album already exists, merge genres/artists
         if album.id in self._albums:
             genre_ids = self._context.genre_ids[album.id]
