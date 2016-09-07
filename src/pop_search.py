@@ -251,7 +251,7 @@ class SearchPopover(Gtk.Popover):
         self.__stack = builder.get_object('stack')
 
         switch = builder.get_object('search-switch')
-        if which("youtube-d") is None:
+        if which("youtube-dl") is None:
             switch.set_sensitive(False)
             switch.set_tooltip_text(_("You need to install youtube-dl"))
         else:
