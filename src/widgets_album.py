@@ -450,6 +450,9 @@ class AlbumSimpleWidget(Gtk.FlowBoxChild, AlbumWidget):
         self.show_all()
         self._widget.connect('enter-notify-event', self._on_enter_notify)
         self._widget.connect('leave-notify-event', self._on_leave_notify)
+        if self._album.is_youtube:
+            self._cover.get_style_context().add_class(
+                                                'cover-frame-youtube')
 
     def get_id(self):
         """
@@ -717,6 +720,9 @@ class AlbumDetailedWidget(Gtk.Bin, AlbumWidget):
             self._menu.show()
         else:
             self.connect('map', self.__on_map)
+        if self._album.is_youtube:
+            self._cover.get_style_context().add_class(
+                                                'cover-frame-youtube')
 
     def update_playing_indicator(self):
         """
