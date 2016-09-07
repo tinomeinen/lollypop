@@ -19,7 +19,7 @@ import json
 from lollypop.sqlcursor import SqlCursor
 from lollypop.tagreader import TagReader
 from lollypop.objects import Track
-from lollypop.define import Lp
+from lollypop.define import Lp, DbPersistent
 
 
 class Youtube(GObject.GObject):
@@ -69,7 +69,7 @@ class Youtube(GObject.GObject):
         first_track = True
         for track_item in item.subitems:
             (album_id, track_id) = self.__save_track(track_item, persistent)
-            if first_track:
+            if first_track and persistent == DbPersistent.NONE:
                 GLib.idle_add(Lp().player.load, Track(track_id))
                 first_track = False
         if album_id is not None:
@@ -87,7 +87,8 @@ class Youtube(GObject.GObject):
         self.__save_cover(item, album_id)
         if Lp().settings.get_value('artist-artwork'):
             Lp().art.cache_artists_info()
-        GLib.idle_add(Lp().player.load, Track(track_id))
+        if persistent == DbPersistent.NONE:
+            GLib.idle_add(Lp().player.load, Track(track_id))
 
     def __save_track(self, item, persistent):
         """
