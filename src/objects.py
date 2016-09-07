@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from gi.repository import GLib
 
 from lollypop.radios import Radios
 from lollypop.define import Lp, Type
@@ -287,13 +288,13 @@ class Track(Base):
         return self._uri
 
     @property
-    def filepath(self):
+    def path(self):
         """
             Get track file path
             Alias to Track.path
             @return str
         """
-        return self.path
+        return GLib.filename_from_uri(self.uri)[0]
 
     @property
     def album(self):

@@ -157,18 +157,21 @@ class CollectionScanner(GObject.GObject, TagReader):
 
         with SqlCursor(Lp().db) as sql:
             i = 0
-            for path in new_tracks:
-                uri = GLib.filename_to_uri(path)[0]
+            for uri in new_tracks:
                 if self.__thread is None:
                     return
                 GLib.idle_add(self.__update_progress, i, count)
                 try:
+                    f = Gio.File.new_for_uri(uri)
+                    info = f.query_info('time::modified',
+                                        Gio.FileQueryInfoFlags.NONE,
+                                        None)
+                    mtime = info.get_attribute_as_string('time::modified')
                     # If songs exists and mtime unchanged, continue,
                     # else rescan
                     if uri in orig_tracks:
                         orig_tracks.remove(uri)
                         i += 1
-                        mtime = int(os.path.getmtime(path))
                         if mtime <= mtimes[uri]:
                             i += 1
                             continue
@@ -177,12 +180,10 @@ class CollectionScanner(GObject.GObject, TagReader):
                     info = self.get_info(uri)
                     # On first scan, use modification time
                     # Else, use current time
-                    if was_empty:
-                        mtime = int(os.path.getmtime(path))
-                    else:
+                    if not was_empty:
                         mtime = int(time())
-                    debug("Adding file: %s" % path)
-                    self.__add2db(path, info, mtime)
+                    debug("Adding file: %s" % uri)
+                    self.__add2db(uri, info, mtime)
                 except GLib.GError as e:
                     print(e, uri)
                     if e.message != gst_message:
@@ -204,17 +205,17 @@ class CollectionScanner(GObject.GObject, TagReader):
         del self.__history
         self.__history = None
 
-    def __add2db(self, path, info, mtime):
+    def __add2db(self, uri, info, mtime):
         """
             Add new file to db with informations
-            @param path as string
+            @param uri as string
             @param info as GstPbutils.DiscovererInfo
             @param mtime as int
             @return track id as int
         """
         debug("CollectionScanner::add2db(): Read tags")
+        path = GLib.filename_from_uri(uri)[0]
         tags = info.get_tags()
-        uri = GLib.filename_to_uri(path)[0]
         title = self.get_title(tags, path)
         artists = self.get_artists(tags)
         composers = self.get_composers(tags)
@@ -294,7 +295,7 @@ class CollectionScanner(GObject.GObject, TagReader):
             Delete track from db
             @param uri as str
         """
-        path = GLib.filename_from_uri(uri)
+        path = GLib.filename_from_uri(uri)[0]
         name = GLib.path_get_basename(path)
         track_id = Lp().tracks.get_id_by_uri(uri)
         album_id = Lp().tracks.get_album_id(track_id)

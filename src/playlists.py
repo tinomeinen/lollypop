@@ -331,11 +331,11 @@ class Playlists(GObject.GObject):
             @return bool
         """
         # We do not use Album object for performance reasons
-        playlist_paths = self.get_tracks(playlist_id)
-        track_paths = Lp().albums.get_track_paths(album_id,
-                                                  genre_ids,
-                                                  artist_ids)
-        return len(set(playlist_paths) & set(track_paths)) == len(track_paths)
+        playlist_uris = self.get_tracks(playlist_id)
+        track_uris = Lp().albums.get_track_uris(album_id,
+                                                genre_ids,
+                                                artist_ids)
+        return len(set(playlist_uris) & set(track_uris)) == len(track_uris)
 
     def get_cursor(self):
         """

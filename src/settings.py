@@ -618,7 +618,7 @@ class SettingsDialog:
         if track_ids:
             track_id = track_ids.pop(0)
             uri = Lp().tracks.get_uri(track_id)
-            filepath = GLib.filename_from_uri(uri)
+            filepath = GLib.filename_from_uri(uri)[0]
             name = GLib.path_get_basename(filepath)
             album_id = Lp().tracks.get_album_id(track_id)
             popularity = Lp().tracks.get_popularity(track_id)

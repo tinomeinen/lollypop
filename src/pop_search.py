@@ -200,8 +200,15 @@ class SearchRow(Gtk.ListBoxRow):
             surface = Gdk.cairo_surface_create_from_pixbuf(
                        pixbuf, self.get_scale_factor(), None)
             del pixbuf
-            GLib.idle_add(self.__cover.set_from_surface, surface)
-            del surface
+            GLib.idle_add(self.__set_cover, surface)
+
+    def __set_cover(self, surface):
+        """
+            Set cover
+            @param surface as cairo.surface
+        """
+        self.__cover.set_from_surface(surface)
+        del surface
 
     def __on_uri_set(self, yt, track_id):
         """

@@ -535,9 +535,9 @@ class AlbumsDatabase:
             result = sql.execute(request, filters)
             return list(itertools.chain(*result))
 
-    def get_track_paths(self, album_id, genre_ids, artist_ids):
+    def get_track_uris(self, album_id, genre_ids, artist_ids):
         """
-            Get track paths for album id/disc
+            Get track uris for album id/disc
             Will search track from albums from same artist
             with same name and different genre
             @param album id as int
@@ -553,7 +553,7 @@ class AlbumsDatabase:
             artist_ids = []
         with SqlCursor(Lp().db) as sql:
             filters = (album_id,)
-            request = "SELECT DISTINCT tracks.filepath\
+            request = "SELECT DISTINCT tracks.uri\
                        FROM tracks"
             if genre_ids:
                 request += ", track_genres"

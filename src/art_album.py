@@ -267,7 +267,8 @@ class AlbumArt(BaseArt, TagReader):
                     which("kid3-cli") is not None:
                 argv = ["kid3-cli", "-c", "select all", "-c",
                         "set picture:'' ''"]
-                for path in Lp().albums.get_track_paths(album.id, [], []):
+                for uri in Lp().albums.get_track_uris(album.id, [], []):
+                    path = GLib.filename_from_uri(uri)[0]
                     argv.append(path)
                 argv.append(None)
                 GLib.spawn_sync(None, argv, None,
@@ -339,7 +340,8 @@ class AlbumArt(BaseArt, TagReader):
         if os.path.exists("/tmp/lollypop_cover_tags.jpg"):
             argv = ["kid3-cli", "-c", "select all", "-c",
                     "set picture:'/tmp/lollypop_cover_tags.jpg' ''"]
-            for path in Lp().albums.get_track_paths(album.id, [], []):
+            for uri in Lp().albums.get_track_uris(album.id, [], []):
+                path = GLib.filename_from_uri(uri)[0]
                 argv.append(path)
             argv.append(None)
             GLib.spawn_sync(None, argv, None,
