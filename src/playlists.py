@@ -260,7 +260,7 @@ class Playlists(GObject.GObject):
                     changed = True
                     sql.execute("INSERT INTO tracks"
                                 " VALUES (?, ?)",
-                                (playlist_id, track.path))
+                                (playlist_id, track.uri))
                 if notify:
                     GLib.idle_add(self.emit, 'playlist-add',
                                   playlist_id, track.id)
@@ -280,7 +280,7 @@ class Playlists(GObject.GObject):
             for track in tracks:
                 sql.execute("DELETE FROM tracks\
                              WHERE uri=?\
-                             AND playlist_id=?", (track.path, playlist_id))
+                             AND playlist_id=?", (track.uri, playlist_id))
                 if notify:
                     GLib.idle_add(self.emit, 'playlist-del',
                                   playlist_id, track.id)
