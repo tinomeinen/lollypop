@@ -396,7 +396,7 @@ class EditMenu(BaseMenu):
             ret = Lp().artists.clean(artist_id)
             if ret:
                 GLib.idle_add(Lp().scanner.emit, 'artist-updated',
-                              artist_id, False)
+                              artist_id, album.id, False)
         for genre_id in genre_ids:
             ret = Lp().genres.clean(genre_id)
             if ret:

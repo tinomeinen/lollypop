@@ -322,7 +322,8 @@ class CollectionScanner(GObject.GObject, TagReader):
         for artist_id in album_artist_ids + artist_ids:
             ret = Lp().artists.clean(artist_id)
             if ret:
-                GLib.idle_add(self.emit, 'artist-updated', artist_id, False)
+                GLib.idle_add(self.emit, 'artist-updated',
+                              artist_id, album_id, False)
         for genre_id in genre_ids:
             ret = Lp().genres.clean(genre_id)
             if ret:
