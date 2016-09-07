@@ -81,6 +81,16 @@ class AlbumsDatabase:
                             "album_genres (album_id, genre_id)"
                             "VALUES (?, ?)", (album_id, genre_id))
 
+    def del_genres(self, album_id):
+        """
+            Delete all genres for album
+            @parma album id as int
+            @warning: commit needed
+        """
+        with SqlCursor(Lp().db) as sql:
+            sql.execute("DELETE FROM album_genres "
+                        "WHERE album_id=?", (album_id,))
+
     def set_artist_ids(self, album_id, artist_ids):
         """
             Set artist id
@@ -753,6 +763,19 @@ class AlbumsDatabase:
             if v and v[0] is not None:
                 return v[0]
             return 0
+
+    def get_genres(self, album_id):
+        """
+            Return genres for album
+        """
+        with SqlCursor(Lp().db) as sql:
+            result = sql.execute("SELECT genres.name\
+                                  FROM albums, album_genres, genres\
+                                  WHERE albums.rowid = ?\
+                                  AND album_genres.album_id = albums.rowid\
+                                  AND album_genres.genre_id = genres.rowid",
+                                 (album_id,))
+            return list(itertools.chain(*result))
 
     def search(self, string):
         """

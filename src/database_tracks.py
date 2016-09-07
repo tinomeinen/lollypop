@@ -98,6 +98,16 @@ class TracksDatabase:
                             "track_genres (track_id, genre_id)"
                             "VALUES (?, ?)", (track_id, genre_id))
 
+    def del_genres(self, track_id):
+        """
+            Delete all genres for track
+            @parma album id as int
+            @warning: commit needed
+        """
+        with SqlCursor(Lp().db) as sql:
+            sql.execute("DELETE FROM track_genres "
+                        "WHERE track_id=?", (track_id,))
+
     def get_ids(self):
         """
             Return all tracks id

@@ -20,7 +20,7 @@ from lollypop.define import WindowSize, Shuffle, Loading
 from lollypop.widgets_track import TracksWidget, TrackRow
 from lollypop.objects import Track
 from lollypop.widgets_rating import RatingWidget
-from lollypop.pop_menu import AlbumMenu
+from lollypop.pop_menu import AlbumMenuPopover, AlbumMenu
 from lollypop.pop_artwork import CoversPopover
 from lollypop.objects import Album
 
@@ -849,8 +849,12 @@ class AlbumDetailedWidget(Gtk.Bin, AlbumWidget):
             @param widget as Gtk.Button
             @param album id as int
         """
-        pop_menu = AlbumMenu(self._album)
-        popover = Gtk.Popover.new_from_model(self._menu, pop_menu)
+        if self._album.is_youtube:
+            popover = AlbumMenuPopover(self._album, AlbumMenu(self._album))
+            popover.set_relative_to(widget)
+        else:
+            popover = Gtk.Popover.new_from_model(widget,
+                                                 AlbumMenu(self._album))
         popover.connect('closed', self.__on_pop_menu_closed)
         self.get_style_context().add_class('album-menu-selected')
         popover.show()

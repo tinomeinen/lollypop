@@ -213,6 +213,17 @@ class Album(Base):
             self._tracks = [Track(track_id) for track_id in self.track_ids]
         return self._tracks
 
+    @property
+    def is_youtube(self):
+        """
+            True if a youtube stream
+            @return bool
+        """
+        if self.tracks:
+            return self.tracks[0].is_youtube
+        else:
+            return False
+
     def disc_names(self, disc):
         """
             Disc names
@@ -238,7 +249,7 @@ class Track(Base):
     """
     FIELDS = ['name', 'album_id', 'album_artist_ids',
               'artist_ids', 'album_name', 'artists',
-              'genres', 'duration', 'number', 'position', 'year']
+              'genre_ids', 'duration', 'number', 'position', 'year']
     DEFAULTS = ['', None, [], [], '', '', '', 0.0, None, 0, None]
 
     def __init__(self, track_id=None):
