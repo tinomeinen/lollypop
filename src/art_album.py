@@ -113,6 +113,8 @@ class AlbumArt(BaseArt, TagReader):
             @param album as Album
             @return [paths]
         """
+        if album.is_youtube:
+            return []
         all_paths = [os.path.join(album.path, f) for f in os.listdir(
                                                                 album.path)]
         paths = []
