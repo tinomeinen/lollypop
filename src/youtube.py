@@ -40,15 +40,10 @@ class Youtube(GObject.GObject):
             Save item into collection as track
             @param item as SearchItem
             @param persistent as DbPersistent
-            @return (album id as int, track id as int)
         """
-        (album_id, track_id) = self.__save_track(item, persistent)
-        t = Thread(target=self.__save_cover, args=(item, album_id,))
+        t = Thread(target=self.__save_track_thread, args=(item, persistent))
         t.daemon = True
         t.start()
-        if Lp().settings.get_value('artist-artwork'):
-            Lp().art.cache_artists_info()
-        return (album_id, track_id)
 
     def save_album(self, item, persistent):
         """
@@ -56,17 +51,36 @@ class Youtube(GObject.GObject):
             @param item as SearchItem
             @param persistent as DbPersistent
         """
-        for track_item in item.subitems:
-            (album_id, track_id) = self.__save_track(track_item, persistent)
-        t = Thread(target=self.__save_cover, args=(item, album_id))
+        t = Thread(target=self.__save_album_thread, args=(item, persistent))
         t.daemon = True
         t.start()
-        if Lp().settings.get_value('artist-artwork'):
-            Lp().art.cache_artists_info()
 
 #######################
 # PRIVATE             #
 #######################
+    def save_album_thread(self, item, persistent):
+        """
+            Save item into collection as album
+            @param item as SearchItem
+            @param persistent as DbPersistent
+        """
+        for track_item in item.subitems:
+            (album_id, track_id) = self.__save_track(track_item, persistent)
+        self.__save_cover(item, album_id)
+        if Lp().settings.get_value('artist-artwork'):
+            Lp().art.cache_artists_info()
+
+    def __save_track_thread(self, item, persistent):
+        """
+            Save item into collection as track
+            @param item as SearchItem
+            @param persistent as DbPersistent
+        """
+        (album_id, track_id) = self.__save_track(item, persistent)
+        self.__save_cover(item, album_id)
+        if Lp().settings.get_value('artist-artwork'):
+            Lp().art.cache_artists_info()
+
     def __save_track(self, item, persistent):
         """
             Save item into collection as track
@@ -104,9 +118,7 @@ class Youtube(GObject.GObject):
             for artist_id in new_artist_ids:
                 GLib.idle_add(Lp().scanner.emit, 'artist-added',
                               artist_id, album_id)
-        t = Thread(target=self.__set_youtube_uri, args=(item, track_id,))
-        t.daemon = True
-        t.start()
+        self.__set_youtube_uri(item, track_id)
         return (album_id, track_id)
 
     def __set_youtube_uri(self, item, track_id):
