@@ -20,7 +20,7 @@ from lollypop.widgets_rating import RatingWidget
 from lollypop.widgets_loved import LovedWidget
 from lollypop.define import Lp
 from lollypop.sqlcursor import SqlCursor
-from lollypop.objects import Track
+from lollypop.objects import Track, Album
 from lollypop import utils
 
 
@@ -339,21 +339,33 @@ class EditMenu(BaseMenu):
     """
     __TAG_EDITORS = ['exfalso', 'easytag', 'picard', 'puddletag', 'kid3-qt']
 
-    def __init__(self, object_id, is_album):
+    def __init__(self, object_id, is_youtube):
         """
             Init edit menu
             @param object id as int
-            @param is album as bool
+            @param is youtube as bool
         """
-        BaseMenu.__init__(self, object_id, [], [], is_album)
+        BaseMenu.__init__(self, object_id, [], [], True)
 
-        if is_album:
+        if is_youtube:
+            self.__set_remove_action()
+        else:
             favorite = Lp().settings.get_value('tag-editor').get_string()
             for editor in [favorite] + self.__TAG_EDITORS:
                 if which(editor) is not None:
                     self.__tag_editor = editor
                     self.__set_edit_actions()
                     break
+
+    def __set_remove_action(self):
+        """
+            Remove album
+        """
+        remove_album_action = Gio.SimpleAction(name="remove_album_action")
+        Lp().add_action(remove_album_action)
+        remove_album_action.connect('activate',
+                                    self.__remove_album)
+        self.append(_("Remove album"), 'app.remove_album_action')
 
     def __set_edit_actions(self):
         """
@@ -364,6 +376,35 @@ class EditMenu(BaseMenu):
         edit_tag_action.connect('activate',
                                 self.__edit_tag)
         self.append(_("Modify information"), 'app.edit_tag_action')
+
+    def __remove_album(self, action, variant):
+        """
+            Remove album
+            @param SimpleAction
+            @param GVariant
+        """
+        album = Album(self._object_id)
+        artist_ids = []
+        for track_id in album.track_ids:
+            artist_ids += Lp().tracks.get_artist_ids(track_id)
+            Lp().tracks.remove(track_id)
+            Lp().tracks.clean(track_id)
+        artist_ids += album.artist_ids
+        genre_ids = Lp().albums.get_genre_ids(album.id)
+        Lp().albums.clean(album.id)
+        for artist_id in list(set(artist_ids)):
+            ret = Lp().artists.clean(artist_id)
+            if ret:
+                GLib.idle_add(Lp().scanner.emit, 'artist-updated',
+                              artist_id, False)
+        for genre_id in genre_ids:
+            ret = Lp().genres.clean(genre_id)
+            if ret:
+                GLib.idle_add(Lp().scanner.emit, 'genre-updated',
+                              genre_id, False)
+        with SqlCursor(Lp().db) as sql:
+            sql.commit()
+        GLib.idle_add(Lp().scanner.emit, 'album-updated', self._object_id)
 
     def __edit_tag(self, action, variant):
         """
@@ -396,9 +437,8 @@ class AlbumMenu(Gio.Menu):
         self.insert_section(1, _("Playlists"),
                             PlaylistsMenu(album.id, album.genre_ids,
                                           album.artist_ids, True))
-        if not album.is_youtube:
-            self.insert_section(2, _("Edit"),
-                                EditMenu(album.id, True))
+        self.insert_section(2, _("Edit"),
+                            EditMenu(album.id, album.is_youtube))
 
 
 class TrackMenu(Gio.Menu):
@@ -508,7 +548,6 @@ class AlbumMenuPopover(Gtk.Popover):
 
         edit = Gtk.Entry()
         edit.set_margin_end(5)
-        edit.set_margin_top(5)
         edit.set_margin_bottom(5)
         edit.set_property('hexpand', True)
         edit.set_property('halign', Gtk.Align.CENTER)
@@ -518,7 +557,6 @@ class AlbumMenuPopover(Gtk.Popover):
         save = Gtk.Button.new_from_icon_name('document-save-symbolic',
                                              Gtk.IconSize.MENU)
         save.set_margin_end(5)
-        save.set_margin_top(5)
         save.set_margin_bottom(5)
         save.set_property('hexpand', True)
         save.set_property('halign', Gtk.Align.CENTER)
@@ -539,10 +577,10 @@ class AlbumMenuPopover(Gtk.Popover):
         menu_widget = self.get_child()
         menu_widget.reparent(grid)
 
-        separator = Gtk.Separator()
-        separator.show()
+        # separator = Gtk.Separator()
+        # separator.show()
 
-        grid.add(separator)
+        # grid.add(separator)
         hgrid = Gtk.Grid()
         hgrid.add(edit)
         hgrid.add(save)

@@ -125,10 +125,11 @@ class Youtube(GObject.GObject):
         # Notify about new artists/genres
         if new_genre_ids or new_artist_ids:
             for genre_id in new_genre_ids:
-                GLib.idle_add(Lp().scanner.emit, 'genre-added', genre_id)
+                GLib.idle_add(Lp().scanner.emit, 'genre-updated',
+                              genre_id, True)
             for artist_id in new_artist_ids:
-                GLib.idle_add(Lp().scanner.emit, 'artist-added',
-                              artist_id, album_id)
+                GLib.idle_add(Lp().scanner.emit, 'artist-updated',
+                              artist_id, album_id, True)
         return (album_id, track_id)
 
     def __get_youtube_id(self, item):
