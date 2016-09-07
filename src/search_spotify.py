@@ -78,8 +78,6 @@ class SpotifySearch:
             Get albums for artists name
             @param name as str
         """
-        album_items = []
-        artists = []
         try:
             # Read album list
             formated = GLib.uri_escape_string(name, None, True).replace(
@@ -92,6 +90,7 @@ class SpotifySearch:
                 # For each album, get cover and tracks
                 artists = []
                 for item in decode['artists']['items']:
+                    album_items = []
                     artist_id = item['id']
                     if item['name'].lower() in artists:
                         continue
@@ -158,13 +157,9 @@ class SpotifySearch:
             if status:
                 decode = json.loads(data.decode('utf-8'))
                 # For each album, get cover and tracks
-                albums = []
                 for item in decode['albums']['items']:
-                    if item['name'].lower() in albums:
-                        continue
                     album_item = SearchItem()
                     album_item.name = item['name']
-                    albums.append(album_item.name.lower())
                     album_item.is_track = False
                     album_item.cover = item['images'][0]['url']
                     album_item.smallcover = item['images'][2]['url']
