@@ -12,8 +12,10 @@
 
 from gi.repository import Gtk, GLib, Gio, Gdk, GdkPixbuf
 
+from gettext import gettext as _
 from cgi import escape
 from threading import Thread
+from shutil import which
 
 from lollypop.define import Lp, ArtSize, Type, DbPersistent
 from lollypop.objects import Track, Album
@@ -248,6 +250,12 @@ class SearchPopover(Gtk.Popover):
         self.__spinner = builder.get_object('spinner')
         self.__stack = builder.get_object('stack')
 
+        switch = builder.get_object('search-switch')
+        if which("youtube-d") is None:
+            switch.set_sensitive(False)
+            switch.set_tooltip_text(_("You need to install youtube-dl"))
+        else:
+            switch.set_state(Lp().settings.get_value('network-search'))
         builder.get_object('scrolled').add(self.__view)
         self.add(builder.get_object('widget'))
 
@@ -291,6 +299,14 @@ class SearchPopover(Gtk.Popover):
             self.__new_btn.set_sensitive(False)
             for child in self.__view.get_children():
                 GLib.idle_add(child.destroy)
+
+    def _on_state_set(self, switch, state):
+        """
+            Save state
+            @param switch as Gtk.switch
+            @param state as bool
+        """
+        Lp().settings.set_boolean('network-search', state)
 
 #######################
 # PRIVATE             #
@@ -369,12 +385,16 @@ class SearchPopover(Gtk.Popover):
         else:
             self.__in_thread = False
             self.__stop_thread = False
+            if not self.__need_network_search():
+                self.__stack.set_visible_child(self.__new_btn)
+                self.__spinner.stop()
 
     def __network_search(self):
         """
             Search on network
         """
-        self.__search.do(self.__current_search)
+        if self.__need_network_search():
+            self.__search.do(self.__current_search)
 
     def __add_rows_internal(self, results):
         """
@@ -394,6 +414,9 @@ class SearchPopover(Gtk.Popover):
         else:
             self.__in_thread = False
             self.__stop_thread = False
+            if not self.__need_network_search():
+                self.__stack.set_visible_child(self.__new_btn)
+                self.__spinner.stop()
 
     def __download_cover(self, uri, row):
         """
@@ -482,6 +505,14 @@ class SearchPopover(Gtk.Popover):
             self.__search.stop()
             self.__search = None
 
+    def __need_network_search(self):
+        """
+            Return True if network search needed
+            @return True
+        """
+        return Lp().settings.get_value('network-search') and\
+            which("youtube-dl") is not None
+
     def __on_item_found(self, search):
         """
             Add rows for internal results
@@ -489,11 +520,13 @@ class SearchPopover(Gtk.Popover):
         """
         if self.__search != search:
             return
+        if search.finished:
+            self.__stack.set_visible_child(self.__new_btn)
+            self.__spinner.stop()
         item = search.items.pop(0)
         search_row = SearchRow(item, False)
         search_row.show()
         self.__view.add(search_row)
-        self.__stack.set_visible_child(self.__new_btn)
         t = Thread(target=self.__download_cover,
                    args=(item.smallcover, search_row))
         t.daemon = True

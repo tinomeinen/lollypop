@@ -31,6 +31,14 @@ class NetworkSearch(SpotifySearch, GObject.GObject):
         SpotifySearch.__init__(self)
         self._cancel = Gio.Cancellable.new()
         self._items = []
+        self._finished = False
+
+    @property
+    def finished(self):
+        """
+            True if search finished
+        """
+        return self._finished
 
     @property
     def items(self):
@@ -51,3 +59,4 @@ class NetworkSearch(SpotifySearch, GObject.GObject):
         """
         SpotifySearch.albums(self, name)
         SpotifySearch.tracks(self, name)
+        self._finished = True
