@@ -720,7 +720,7 @@ class AlbumDetailedWidget(Gtk.Bin, AlbumWidget):
             self._menu.show()
         else:
             self.connect('map', self.__on_map)
-        if self._album.is_youtube:
+        if self._album.is_youtube and show_cover:
             self._cover.get_style_context().add_class(
                                                 'cover-frame-youtube')
 
