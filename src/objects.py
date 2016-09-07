@@ -248,9 +248,9 @@ class Track(Base):
         Represent a track
     """
     FIELDS = ['name', 'album_id', 'album_artist_ids',
-              'artist_ids', 'album_name', 'artists',
-              'genre_ids', 'duration', 'number', 'position', 'year']
-    DEFAULTS = ['', None, [], [], '', '', '', 0.0, None, 0, None]
+              'artist_ids', 'genre_ids', 'album_name', 'artists',
+              'duration', 'number', 'position', 'year', 'persistence']
+    DEFAULTS = ['', None, [], [], [], '', '', 0.0, None, 0, None, 1]
 
     def __init__(self, track_id=None):
         """
@@ -333,6 +333,13 @@ class Track(Base):
         if getattr(self, "_album_artists") is None:
             self._album_artists = self.album.artists
         return self._album_artists
+
+    def set_duration(self, duration):
+        """
+            Set duration
+            @param duration as in
+        """
+        self._duration = duration
 
     def set_album_artists(self, artists):
         """

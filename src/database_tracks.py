@@ -346,6 +346,18 @@ class TracksDatabase:
                 return v[0]
             return 0
 
+    def set_duration(self, track_id, duration):
+        """
+            Get track duration for track id
+            @param Track id as int
+            @param duration as int
+        """
+        with SqlCursor(Lp().db) as sql:
+            sql.execute("UPDATE tracks\
+                         SET duration=?\
+                         WHERE rowid=?", (duration, track_id,))
+            sql.commit()
+
     def is_empty(self):
         """
             Return True if no tracks in db

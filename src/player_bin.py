@@ -19,7 +19,7 @@ from lollypop.tagreader import TagReader
 from lollypop.player_plugins import PluginsPlayer
 from lollypop.define import GstPlayFlags, NextContext, Lp
 from lollypop.codecs import Codecs
-from lollypop.define import Type
+from lollypop.define import Type, DbPersistent
 from lollypop.utils import debug
 
 
@@ -461,12 +461,22 @@ class BinPlayer(BasePlayer):
         """
         # Some radio streams send message tag every seconds!
         changed = False
-        if self.current_track.id >= 0 or\
-           self.current_track.duration > 0.0:
+        if self.current_track.persistence == DbPersistent.INTERNAL and\
+                (self.current_track.id >= 0 or
+                 self.current_track.duration > 0.0):
             return
         debug("Player::__on_bus_message_tag(): %s" % self.current_track.uri)
         reader = TagReader()
-        tags = message.parse_tag()
+
+        # Update duration of non internals
+        if self.current_track.persistence != DbPersistent.INTERNAL:
+            tags = message.parse_tag()
+            duration = reader.get_info(
+                         self.current_track.uri).get_duration() / 1000000000
+            if duration != self.current_track.duration:
+                Lp().tracks.set_duration(self.current_track.id, duration)
+                self.current_track.set_duration(duration)
+                self.emit('current-changed')
 
         title = reader.get_title(tags, '')
         if title != '' and self.current_track.name != title:
