@@ -69,6 +69,8 @@ class Youtube(GObject.GObject):
         first_track = True
         for track_item in item.subitems:
             (album_id, track_id) = self.__save_track(track_item, persistent)
+            if track_id is None:
+                continue
             if first_track and persistent == DbPersistent.NONE:
                 GLib.idle_add(Lp().player.load, Track(track_id))
                 first_track = False
@@ -84,6 +86,8 @@ class Youtube(GObject.GObject):
             @param persistent as DbPersistent
         """
         (album_id, track_id) = self.__save_track(item, persistent)
+        if track_id is None:
+            return
         self.__save_cover(item, album_id)
         if Lp().settings.get_value('artist-artwork'):
             Lp().art.cache_artists_info()
@@ -99,7 +103,7 @@ class Youtube(GObject.GObject):
         """
         yid = self.__get_youtube_id(item)
         if yid is None:
-            return
+            return (None, None)
         t = TagReader()
         with SqlCursor(Lp().db) as sql:
             artists = "; ".join(item.artists)
