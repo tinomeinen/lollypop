@@ -513,6 +513,29 @@ class SearchPopover(Gtk.Popover):
         return Lp().settings.get_value('network-search') and\
             which("youtube-dl") is not None
 
+    def __item_exists_in_db(self, item):
+        """
+            Search if item exists in db
+            @return bool
+        """
+        artist_ids = []
+        for artist in item.artists:
+            artist_id = Lp().artists.get_id(artist)
+            artist_ids.append(artist_id)
+        if item.is_track:
+            for track_id in Lp().tracks.get_ids_for_name(item.name):
+                db_artist_ids = Lp().tracks.get_artist_ids(track_id)
+                union = list(set(artist_ids) & set(db_artist_ids))
+                if union == db_artist_ids:
+                    return True
+        else:
+            album_ids = Lp().albums.get_ids(artist_ids, [])
+            for album_id in album_ids:
+                album_name = Lp().albums.get_name(album_id)
+                if album_name == item.album_name:
+                    return True
+        return False
+
     def __on_item_found(self, search):
         """
             Add rows for internal results
@@ -524,6 +547,8 @@ class SearchPopover(Gtk.Popover):
             self.__stack.set_visible_child(self.__new_btn)
             self.__spinner.stop()
         item = search.items.pop(0)
+        if self.__item_exists_in_db(item):
+            return
         search_row = SearchRow(item, False)
         search_row.show()
         self.__view.add(search_row)
