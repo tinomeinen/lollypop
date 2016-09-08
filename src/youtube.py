@@ -18,7 +18,7 @@ import json
 
 from lollypop.sqlcursor import SqlCursor
 from lollypop.tagreader import TagReader
-from lollypop.objects import Track
+from lollypop.objects import Track, Album
 from lollypop.define import Lp, DbPersistent, GOOGLE_API_ID
 
 
@@ -72,7 +72,9 @@ class Youtube(GObject.GObject):
             if track_id is None:
                 continue
             if first_track and persistent == DbPersistent.NONE:
+                Lp().player.clear_albums()
                 GLib.idle_add(Lp().player.load, Track(track_id))
+                GLib.idle_add(Lp().player.add_album, Album(album_id))
                 first_track = False
         if album_id is not None:
             self.__save_cover(item, album_id)
