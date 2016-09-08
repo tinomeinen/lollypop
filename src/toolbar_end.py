@@ -99,6 +99,8 @@ class PartyPopover(Gtk.Popover):
             except:
                 pass
         Lp().settings.set_value('party-ids',  GLib.Variant('ai', ids))
+        Lp().player.set_party_ids()
+        Lp().player.set_next()
 
 
 class ToolbarEnd(Gtk.Bin):
@@ -226,7 +228,7 @@ class ToolbarEnd(Gtk.Bin):
             @param eventbox as Gtk.EventBox
             @param event as Gdk.Event
         """
-        if event.button == 3 and not Lp().player.is_party:
+        if event.button == 3:
             popover = PartyPopover()
             popover.set_relative_to(eventbox)
             self.__next_popover.hide()
