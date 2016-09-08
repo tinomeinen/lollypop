@@ -814,8 +814,11 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">center</property>
+                    <property name="margin_top">10</property>
                     <property name="label" translatable="yes">Google Web Services need a custom API key.
-Without one, you will reach default quota soon...</property>
+Without one, you will reach default quota soon...
+Lollypop needs this to download artwork and music</property>
+                    <property name="justify">center</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -824,9 +827,10 @@ Without one, you will reach default quota soon...</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="youtube-entry">
+                  <object class="GtkEntry" id="cs-entry">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <signal name="changed" handler="_on_cs_api_changed" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -834,32 +838,8 @@ Without one, you will reach default quota soon...</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="gi-entry">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkLinkButton">
                     <property name="label" translatable="yes">Custom Search API</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="relief">none</property>
-                    <property name="uri">https://console.developers.google.com/apis/</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">0</property>
-                    <property name="top_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLinkButton">
-                    <property name="label">Youtube Data API</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>

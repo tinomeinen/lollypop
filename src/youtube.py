@@ -19,7 +19,7 @@ import json
 from lollypop.sqlcursor import SqlCursor
 from lollypop.tagreader import TagReader
 from lollypop.objects import Track
-from lollypop.define import Lp, DbPersistent
+from lollypop.define import Lp, DbPersistent, GOOGLE_API_ID
 
 
 class Youtube(GObject.GObject):
@@ -144,15 +144,14 @@ class Youtube(GObject.GObject):
         """
         search = "%s %s" % (" ".join(item.artists),
                             item.name)
-        key = "AIzaSyBiaYluG8pVYxgKRGcc4uEbtgE9q8la0dw"
-        cx = "015987506728554693370:waw3yqru59a"
+        key = Lp().settings.get_value('cs-api-key').get_string()
         try:
             f = Gio.File.new_for_uri("https://www.googleapis.com/youtube/v3/"
                                      "search?part=snippet&q=%s&"
                                      "type=video&key=%s&cx=%s" % (
                                                               search,
                                                               key,
-                                                              cx))
+                                                              GOOGLE_API_ID))
             (status, data, tag) = f.load_contents(None)
             if status:
                 decode = json.loads(data.decode('utf-8'))

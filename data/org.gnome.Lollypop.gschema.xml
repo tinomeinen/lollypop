@@ -68,7 +68,7 @@
             <description></description>
         </key>
         <key type="s" name="cs-api-key">
-            <default>""</default>
+            <default>"AIzaSyBiaYluG8pVYxgKRGcc4uEbtgE9q8la0dw"</default>
             <summary>Google Custom Search API key</summary>
             <description></description>
         </key>

@@ -35,6 +35,8 @@ DataPath = path.expanduser("~") + "/.local/share/lollypop"
 
 Lp = Gio.Application.get_default
 
+GOOGLE_API_ID = "015987506728554693370:waw3yqru59a"
+
 
 # Represent what to do on next track
 class NextContext:
