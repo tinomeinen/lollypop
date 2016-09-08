@@ -13,6 +13,7 @@
 from gi.repository import Gst, GstAudio, GstPbutils, GLib
 
 from time import time
+from threading import Thread
 
 from lollypop.player_base import BasePlayer
 from lollypop.tagreader import TagReader
@@ -323,6 +324,20 @@ class BinPlayer(BasePlayer):
 #######################
 # PRIVATE             #
 #######################
+    def __update_current_duration(self, reader):
+        """
+            Update current track duration
+            @param reader as TagReader
+        """
+        duration = reader.get_info(
+                            self.current_track.uri).get_duration() / 1000000000
+        if duration != self.current_track.duration:
+            Lp().tracks.set_duration(self.current_track.id, duration)
+            # We modify mtime to be sure not looking for tags again
+            Lp().tracks.set_mtime(self.current_track.id, 1)
+            self.current_track.set_duration(duration)
+            GLib.idle_add(self.emit, 'duration-changed')
+
     def __load(self, track, init_volume=True):
         """
             Stop current track, load track id and play it
@@ -472,17 +487,12 @@ class BinPlayer(BasePlayer):
 
         # Update duration of non internals
         if self.current_track.persistence != DbPersistent.INTERNAL:
-            tags = message.parse_tag()
-            duration = reader.get_info(
-                         self.current_track.uri).get_duration() / 1000000000
-            if duration != self.current_track.duration:
-                Lp().tracks.set_duration(self.current_track.id, duration)
-                # We modify mtime to be sure not looking for tags again
-                Lp().tracks.set_mtime(self.current_track.id, 1)
-                self.current_track.set_duration(duration)
-                self.emit('duration-changed')
-                return
+            t = Thread(target=self.__update_current_duration, args=(reader,))
+            t.daemon = True
+            t.start()
+            return
 
+        tags = message.parse_tag()
         title = reader.get_title(tags, '')
         if title != '' and self.current_track.name != title:
             self.current_track.name = title
