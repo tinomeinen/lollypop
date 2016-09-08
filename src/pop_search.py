@@ -81,13 +81,6 @@ class SearchRow(Gtk.ListBoxRow):
         """
         return self.__item.is_track
 
-    @property
-    def cover_uri(self):
-        """
-            Return cover uri
-        """
-        return self.__item.smallcover
-
     def exists(self, items):
         """
             Return True if self exists in items
@@ -237,6 +230,7 @@ class SearchPopover(Gtk.Popover):
         self.__stop_thread = False
         self.__timeout = None
         self.__current_search = ''
+        self.__search = None
 
         builder = Gtk.Builder()
         builder.add_from_resource('/org/gnome/Lollypop/SearchPopover.ui')
@@ -276,6 +270,9 @@ class SearchPopover(Gtk.Popover):
         """
         if self.__in_thread:
             self.__stop_thread = True
+            self.__reset_search()
+            self.__stack.set_visible_child(self.__new_btn)
+            self.__spinner.stop()
             GLib.timeout_add(100, self._on_search_changed, widget)
 
         if self.__timeout:
@@ -288,6 +285,9 @@ class SearchPopover(Gtk.Popover):
             self.__timeout = GLib.timeout_add(100,
                                               self.__on_search_changed_thread)
         else:
+            self.__reset_search()
+            self.__stack.set_visible_child(self.__new_btn)
+            self.__spinner.stop()
             self.__new_btn.set_sensitive(False)
             for child in self.__view.get_children():
                 GLib.idle_add(child.destroy)
@@ -374,44 +374,7 @@ class SearchPopover(Gtk.Popover):
         """
             Search on network
         """
-        saved_search = self.__current_search
-        search_items = [self.__current_search]
-        # search_items += self.__current_search.split()
-        return_items = []
-        search = NetworkSearch()
-
-        for item in search_items:
-            return_items = search.albums(item)
-        if saved_search == self.__current_search:
-            GLib.idle_add(self.__add_rows_external, return_items)
-        for item in search_items:
-            return_items = search.tracks(item)
-        if saved_search == self.__current_search:
-            GLib.idle_add(self.__add_rows_external, return_items)
-
-    def __add_rows_external(self, results):
-        """
-            Add rows for external results
-            @param results as array of SearchItem
-        """
-        if results:
-            result = results.pop(0)
-            search_row = SearchRow(result, False)
-            search_row.show()
-            self.__view.add(search_row)
-            if self.__stop_thread:
-                self.__in_thread = False
-                self.__stop_thread = False
-            else:
-                GLib.idle_add(self.__add_rows_external, results)
-        else:
-            self.__in_thread = False
-            self.__stop_thread = False
-            self.__spinner.stop()
-            self.__stack.set_visible_child(self.__new_btn)
-            t = Thread(target=self.__download_covers)
-            t.daemon = True
-            t.start()
+        self.__search.do(self.__current_search)
 
     def __add_rows_internal(self, results):
         """
@@ -432,30 +395,27 @@ class SearchPopover(Gtk.Popover):
             self.__in_thread = False
             self.__stop_thread = False
 
-    def __download_covers(self):
+    def __download_cover(self, uri, row):
         """
             Download row covers
+            @param uri as str
+            @param row as SearchRow
         """
-        for row in self.__view.get_children():
-            if self.__stop_thread:
-                self.__in_thread = False
-                self.__stop_thread = False
-                return
-            try:
-                f = Gio.File.new_for_uri(row.cover_uri)
-                (status, data, tag) = f.load_contents(None)
-                if status:
-                    stream = Gio.MemoryInputStream.new_from_data(data,
-                                                                 None)
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
-                                                       stream,
-                                                       ArtSize.MEDIUM,
-                                                       -1,
-                                                       True,
-                                                       None)
-                    GLib.idle_add(row.set_cover, pixbuf)
-            except:
-                pass
+        try:
+            f = Gio.File.new_for_uri(uri)
+            (status, data, tag) = f.load_contents(None)
+            if status:
+                stream = Gio.MemoryInputStream.new_from_data(data,
+                                                             None)
+                pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
+                                                   stream,
+                                                   ArtSize.MEDIUM,
+                                                   -1,
+                                                   True,
+                                                   None)
+                GLib.idle_add(row.set_cover, pixbuf)
+        except:
+            pass
 
     def __populate_user_playlist_by_tracks(self, track_ids, track_id):
         """
@@ -513,6 +473,32 @@ class SearchPopover(Gtk.Popover):
                 playlist_id = Lp().playlists.get_id(self.__current_search)
             Lp().playlists.add_tracks(playlist_id, tracks)
 
+    def __reset_search(self):
+        """
+            Reset search object
+        """
+        if self.__search is not None:
+            self.__search.disconnect_by_func(self.__on_item_found)
+            self.__search.stop()
+            self.__search = None
+
+    def __on_item_found(self, search):
+        """
+            Add rows for internal results
+            @param search as NetworkSearch
+        """
+        if self.__search != search:
+            return
+        item = search.items.pop(0)
+        search_row = SearchRow(item, False)
+        search_row.show()
+        self.__view.add(search_row)
+        self.__stack.set_visible_child(self.__new_btn)
+        t = Thread(target=self.__download_cover,
+                   args=(item.smallcover, search_row))
+        t.daemon = True
+        t.start()
+
     def __on_map(self, widget):
         """
             Disable global shortcuts and resize
@@ -537,6 +523,8 @@ class SearchPopover(Gtk.Popover):
         """
         self.__timeout = None
         self.__in_thread = True
+        self.__search = NetworkSearch()
+        self.__search.connect('item-found', self.__on_item_found)
         self.__stack.set_visible_child(self.__spinner)
         self.__spinner.start()
         t = Thread(target=self.__populate)

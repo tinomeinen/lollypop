@@ -18,6 +18,7 @@ class SearchItem:
     def __init__(self):
         self.is_track = False
         self.id = None  # Always None for externals
+        self.ex_id = None
         # Internal
         self.artist_ids = []
         # External
