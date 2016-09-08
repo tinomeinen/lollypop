@@ -238,9 +238,9 @@ class BinPlayer(BasePlayer):
             self._plugins.volume.props.volume = 1.0
         debug("BinPlayer::_load_track(): %s" % track.uri)
         try:
+            loaded = True
             if track.is_youtube:
-                if not self._load_youtube(track):
-                    return False
+                loaded = self._load_youtube(track)
             else:
                 self._playbin.set_property('uri', track.uri)
             if track.id in self._queue:
@@ -250,6 +250,11 @@ class BinPlayer(BasePlayer):
             else:
                 self._current_track = track
                 self._queue_track = None
+            # If track not loaded, go next
+            if not loaded:
+                self.set_next()
+                GLib.timeout_add(500, self.load, self.next_track, True)
+                return False
         except Exception as e:  # Gstreamer error
             print("BinPlayer::_load_track(): ", e)
             self._queue_track = None
@@ -264,8 +269,10 @@ class BinPlayer(BasePlayer):
             @return True if loading
         """
         if not Gio.NetworkMonitor.get_default().get_network_available():
-            Lp().notify.send(_("No network available, can't play this track"),
-                             track.uri)
+            if play:
+                Lp().notify.send(_("No network available,"
+                                   " can't play this track"),
+                                 track.uri)
             return False
         argv = ["youtube-dl", "-g", "-f", "bestaudio", track.uri, None]
         try:
@@ -479,6 +486,8 @@ class BinPlayer(BasePlayer):
             @param bus as Gst.Bus
             @param message as Gst.Message
         """
+        if self.current_track.uri == "":
+            return
         # Some radio streams send message tag every seconds!
         changed = False
         if (self.current_track.persistence == DbPersistent.INTERNAL or
@@ -547,13 +556,13 @@ class BinPlayer(BasePlayer):
             @param bus as Gst.Bus
             @param message as Gst.Message
         """
-        debug("Error playing: %s" % self.current_track.uri)
+        print("BinPlayer::__on_bus_error():",
+              message.parse_error()[0].message,
+              self._playbin.get_property('uri'))
         Lp().window.pulse(False)
         if self.__codecs.is_missing_codec(message):
             self.__codecs.install()
             Lp().scanner.stop()
-        elif Lp().notify is not None:
-            Lp().notify.send(message.parse_error()[0].message)
         self.emit('current-changed')
         return True
 
