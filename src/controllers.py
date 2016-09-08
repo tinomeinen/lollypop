@@ -140,6 +140,7 @@ class ProgressController:
         self.__seeking = False
         # Update pogress position
         self.__timeout_id = None
+        Lp().player.connect('duration-changed', self.__on_duration_changed)
 
     def on_current_changed(self, player):
         """
@@ -232,6 +233,18 @@ class ProgressController:
                 self._progress.set_value(value)
                 self._timelabel.set_text(seconds_to_string(value/60))
         return True
+
+#######################
+# PRIVATE             #
+#######################
+    def __on_duration_changed(self, player):
+        """
+            Update duration
+            @param player as Player
+        """
+        self._progress.set_range(0.0, player.current_track.duration * 60)
+        self._total_time_label.set_text(
+                seconds_to_string(player.current_track.duration))
 
 
 class InfosController:

@@ -480,7 +480,8 @@ class BinPlayer(BasePlayer):
                 # We modify mtime to be sure not looking for tags again
                 Lp().tracks.set_mtime(self.current_track.id, 1)
                 self.current_track.set_duration(duration)
-                self.emit('current-changed')
+                self.emit('duration-changed')
+                return
 
         title = reader.get_title(tags, '')
         if title != '' and self.current_track.name != title:
