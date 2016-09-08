@@ -14,7 +14,6 @@ from gi.repository import Gst, GstAudio, GstPbutils, GLib, Gio
 
 from time import time
 from threading import Thread
-from gettext import gettext as _
 
 from lollypop.player_base import BasePlayer
 from lollypop.tagreader import TagReader
@@ -253,7 +252,8 @@ class BinPlayer(BasePlayer):
             # If track not loaded, go next
             if not loaded:
                 self.set_next()
-                GLib.timeout_add(500, self.load, self.next_track, True)
+                GLib.timeout_add(500, self.__load,
+                                 self.next_track, init_volume)
                 return False
         except Exception as e:  # Gstreamer error
             print("BinPlayer::_load_track(): ", e)
@@ -269,10 +269,6 @@ class BinPlayer(BasePlayer):
             @return True if loading
         """
         if not Gio.NetworkMonitor.get_default().get_network_available():
-            if play:
-                Lp().notify.send(_("No network available,"
-                                   " can't play this track"),
-                                 track.uri)
             return False
         argv = ["youtube-dl", "-g", "-f", "bestaudio", track.uri, None]
         try:
