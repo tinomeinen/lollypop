@@ -10,10 +10,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gst, GstAudio, GstPbutils, GLib
+from gi.repository import Gst, GstAudio, GstPbutils, GLib, Gio
 
 from time import time
 from threading import Thread
+from gettext import gettext as _
 
 from lollypop.player_base import BasePlayer
 from lollypop.tagreader import TagReader
@@ -237,21 +238,18 @@ class BinPlayer(BasePlayer):
             self._plugins.volume.props.volume = 1.0
         debug("BinPlayer::_load_track(): %s" % track.uri)
         try:
+            if track.is_youtube:
+                if not self._load_youtube(track):
+                    return False
+            else:
+                self._playbin.set_property('uri', track.uri)
             if track.id in self._queue:
                 self._queue_track = track
                 self._queue.remove(track.id)
                 self.emit('queue-changed')
-                if self._queue_track.is_youtube:
-                    self._load_youtube(self._queue_track)
-                else:
-                    self._playbin.set_property('uri', self._queue_track.uri)
             else:
                 self._current_track = track
                 self._queue_track = None
-                if self._current_track.is_youtube:
-                    self._load_youtube(self._current_track)
-                else:
-                    self._playbin.set_property('uri', self.current_track.uri)
         except Exception as e:  # Gstreamer error
             print("BinPlayer::_load_track(): ", e)
             self._queue_track = None
@@ -263,7 +261,12 @@ class BinPlayer(BasePlayer):
             Load track url and play it
             @param track as Track
             @param play as bool
+            @return True if loading
         """
+        if not Gio.NetworkMonitor.get_default().get_network_available():
+            Lp().notify.send(_("No network available, can't play this track"),
+                             track.uri)
+            return False
         argv = ["youtube-dl", "-g", "-f", "bestaudio", track.uri, None]
         try:
             self.emit('loading-changed')
@@ -276,6 +279,7 @@ class BinPlayer(BasePlayer):
                          self.__set_gv_uri,
                          track, play,
                          priority=GLib.PRIORITY_HIGH)
+            return True
         except Exception as e:
             print("Youtube::__get_youtube_uri()", e)
 
