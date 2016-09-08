@@ -60,3 +60,4 @@ class NetworkSearch(SpotifySearch, GObject.GObject):
         SpotifySearch.albums(self, name)
         SpotifySearch.tracks(self, name)
         self._finished = True
+        self.emit('item-found')

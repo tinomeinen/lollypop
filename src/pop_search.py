@@ -546,6 +546,8 @@ class SearchPopover(Gtk.Popover):
         if search.finished:
             self.__stack.set_visible_child(self.__new_btn)
             self.__spinner.stop()
+        if not search.items:
+            return
         item = search.items.pop(0)
         if self.__item_exists_in_db(item):
             return
