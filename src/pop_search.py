@@ -549,6 +549,7 @@ class SearchPopover(Gtk.Popover):
         """
         # FIXME Not needed with GTK >= 3.18
         Lp().window.enable_global_shorcuts(True)
+        self.__reset_search()
 
     def __on_search_changed_thread(self):
         """
