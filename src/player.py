@@ -508,6 +508,8 @@ class Player(BinPlayer, QueuePlayer, UserPlaylistPlayer, RadioPlayer,
             if self._next_track.id is None:
                 self._next_track = LinearPlayer.next(self)
             self.emit('next-changed')
+            if self._next_track.is_youtube:
+                self._load_youtube(self._next_track, False)
         except Exception as e:
             print("Player::set_next", e)
 

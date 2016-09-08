@@ -257,10 +257,11 @@ class BinPlayer(BasePlayer):
             return False
         return True
 
-    def _load_youtube(self, track):
+    def _load_youtube(self, track, play=True):
         """
             Load track url and play it
             @param track as Track
+            @param play as bool
         """
         argv = ["youtube-dl", "-g", "-f", "bestaudio", track.uri, None]
         try:
@@ -271,8 +272,8 @@ class BinPlayer(BasePlayer):
                                        GLib.SpawnFlags.DO_NOT_REAP_CHILD, None)
             io = GLib.IOChannel(o)
             io.add_watch(GLib.IO_IN | GLib.IO_HUP,
-                         self.__play_gv_uri,
-                         track,
+                         self.__set_gv_uri,
+                         track, play,
                          priority=GLib.PRIORITY_HIGH)
         except Exception as e:
             print("Youtube::__get_youtube_uri()", e)
@@ -580,13 +581,15 @@ class BinPlayer(BasePlayer):
             Lp().tracks.set_more_popular(finished.id)
             Lp().albums.set_more_popular(finished.album_id)
 
-    def __play_gv_uri(self, io, condition, track):
+    def __set_gv_uri(self, io, condition, track, play):
         """
             Play uri for io
             @param io as GLib.IOChannel
             @param condition as Constant
             @param track as Track
+            @param play as bool
         """
         track.set_uri(io.readline())
-        self.load(track)
+        if play:
+            self.load(track)
         return False
