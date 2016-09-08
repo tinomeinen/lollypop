@@ -53,11 +53,11 @@ class NetworkSearch(SpotifySearch, GObject.GObject):
 
     def do(self, name):
         """
-            Return tracks containing name
+            Do the search
             @param name as str
-            @return tracks as [SearchItem]
         """
-        SpotifySearch.albums(self, name)
-        SpotifySearch.tracks(self, name)
+        if Gio.NetworkMonitor.get_default().get_network_available():
+            SpotifySearch.albums(self, name)
+            SpotifySearch.tracks(self, name)
         self._finished = True
         self.emit('item-found')
