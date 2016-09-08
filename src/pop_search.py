@@ -575,6 +575,8 @@ class SearchPopover(Gtk.Popover):
         # FIXME Not needed with GTK >= 3.18
         Lp().window.enable_global_shorcuts(True)
         self.__reset_search()
+        self.__stack.set_visible_child(self.__new_btn)
+        self.__spinner.stop()
 
     def __on_search_changed_thread(self):
         """
