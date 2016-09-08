@@ -839,7 +839,7 @@ Lollypop needs this to download artwork and music</property>
                 </child>
                 <child>
                   <object class="GtkLinkButton">
-                    <property name="label" translatable="yes">Custom Search API</property>
+                    <property name="label" translatable="yes">API key</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -849,6 +849,23 @@ Lollypop needs this to download artwork and music</property>
                   <packing>
                     <property name="left_attach">0</property>
                     <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">You need to enable "Custom Search API" 
+and "Youtube Data API" for your project.</property>
+                    <property name="justify">center</property>
+                    <style>
+                      <class name="dim-label"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">2</property>
+                    <property name="width">2</property>
                   </packing>
                 </child>
               </object>

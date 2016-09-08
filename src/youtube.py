@@ -104,7 +104,8 @@ class Youtube(GObject.GObject):
             @return (album id as int, track id as int)
         """
         yid = self.__get_youtube_id(item)
-        if yid is None:
+        uri = "https://www.youtube.com/watch?v=%s" % yid
+        if yid is None or Lp().tracks.get_id_by_uri(uri) is not None:
             return (None, None)
         t = TagReader()
         with SqlCursor(Lp().db) as sql:
