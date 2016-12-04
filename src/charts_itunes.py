@@ -22,7 +22,7 @@ from locale import getdefaultlocale
 
 from lollypop.web import Web
 from lollypop.define import DbPersistent, Lp
-from lollypop.utils import debug, get_network_available
+from lollypop.utils import debug, get_network_available, kill_gfvsd_cache
 from lollypop.search_item import SearchItem
 
 
@@ -220,6 +220,7 @@ class ItunesCharts:
             url = self.__INFO % (itunes_id, language)
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents(self.__cancel)
+            kill_gfvsd_cache(url)
             if not status or self.__stop:
                 return
             decode = json.loads(data.decode('utf-8'))
@@ -262,6 +263,7 @@ class ItunesCharts:
         try:
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents(self.__cancel)
+            kill_gfvsd_cache(url)
             if not status or self.__stop:
                 return []
             root = xml.fromstring(data)

@@ -21,6 +21,7 @@ from lollypop.objects import Track, Album
 from lollypop.web_youtube import WebYouTube
 from lollypop.web_jgm90 import WebJmg90
 from lollypop.define import Lp, DbPersistent, Type
+from lollypop.utils import kill_gfvsd_cache
 
 
 class Web:
@@ -194,5 +195,6 @@ class Web:
         """
         f = Gio.File.new_for_uri(item.cover)
         (status, data, tag) = f.load_contents(None)
+        kill_gfvsd_cache(item.cover)
         if status:
             Lp().art.save_album_artwork(data, album_id)

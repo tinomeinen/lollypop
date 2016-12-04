@@ -20,6 +20,57 @@ from lollypop.define import Lp, Type
 from lollypop.objects import Track
 
 
+def kill_gfvsd_cache(uri):
+        """
+            Workaround https://bugzilla.gnome.org/show_bug.cgi?id=775600
+        """
+        def do_kill(uri):
+            debug("do_kill(): %s" % uri)
+            try:
+                # Get interfaces
+                bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+                proxy = Gio.DBusProxy.new_sync(
+                                    bus, Gio.DBusProxyFlags.NONE, None,
+                                    'org.gtk.vfs.Daemon',
+                                    '/org/gtk/vfs/mounttracker',
+                                    'org.gtk.vfs.MountTracker',
+                                    None)
+                information = proxy.call_sync('ListMounts', None,
+                                              Gio.DBusCallFlags.NO_AUTO_START,
+                                              500, None)[0]
+                mounts = []
+                for item in information:
+                    item_uri = GLib.uri_unescape_string(item[3], None)
+                    if item_uri.find(uri) != -1:
+                        mounts.append(item[1])
+                        debug("do_kill(): %s" % item[1])
+                # Kill mount points
+                for mount in mounts:
+                    proxy = Gio.DBusProxy.new_sync(
+                                    bus, Gio.DBusProxyFlags.NONE, None,
+                                    'org.gtk.vfs.mountpoint_http',
+                                    mount,
+                                    'org.gtk.vfs.Mount',
+                                    None)
+                    proxy.call_sync(
+                            'Unmount',
+                            GLib.Variant('(sou)',
+                                         ('org.gtk.vfs.mountpoint_http',
+                                          mount,
+                                          0),),
+                            Gio.DBusCallFlags.NO_AUTO_START,
+                            500, None)
+            except Exception as e:
+                print("kill_gfvsd_cache():", e)
+
+        def do_kill_thread(uri):
+            t = Thread(target=do_kill, args=(uri,))
+            t.daemon = True
+            t.start()
+        # We delay, otherwise: busy error
+        GLib.timeout_add(5000, do_kill_thread, uri)
+
+
 def get_network_available():
     """
         Return True if network avaialble

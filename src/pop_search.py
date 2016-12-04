@@ -19,7 +19,7 @@ from lollypop.define import Lp, ArtSize, Type, DbPersistent
 from lollypop.objects import Track, Album
 from lollypop.pop_menu import TrackMenuPopover, TrackMenu
 from lollypop.pop_album import AlbumPopover
-from lollypop.utils import noaccents, get_network_available
+from lollypop.utils import noaccents, get_network_available, kill_gfvsd_cache
 
 
 class SearchRow(Gtk.ListBoxRow):
@@ -436,6 +436,7 @@ class SearchPopover(Gtk.Popover):
         try:
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
+            kill_gfvsd_cache(uri)
             if status:
                 stream = Gio.MemoryInputStream.new_from_data(data,
                                                              None)

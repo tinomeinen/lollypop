@@ -16,7 +16,7 @@ import json
 from re import sub
 
 from lollypop.define import Lp, GOOGLE_API_ID
-from lollypop.utils import escape
+from lollypop.utils import escape, kill_gfvsd_cache
 
 
 class WebYouTube:
@@ -93,13 +93,14 @@ class WebYouTube:
                             True)
         key = Lp().settings.get_value('cs-api-key').get_string()
         try:
-            f = Gio.File.new_for_uri("https://www.googleapis.com/youtube/v3/"
-                                     "search?part=snippet&q=%s&"
-                                     "type=video&key=%s&cx=%s" % (
-                                                              search,
-                                                              key,
-                                                              GOOGLE_API_ID))
+            uri = "https://www.googleapis.com/youtube/v3/"\
+                  "search?part=snippet&q=%s&"\
+                  "type=video&key=%s&cx=%s" % (search,
+                                               key,
+                                               GOOGLE_API_ID)
+            f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
+            kill_gfvsd_cache(uri)
             if status:
                 decode = json.loads(data.decode('utf-8'))
                 dic = {}
@@ -179,9 +180,11 @@ class WebYouTube:
                             unescaped.replace(' ', '+'),
                             None,
                             True)
-            f = Gio.File.new_for_uri("https://www.youtube.com/"
-                                     "results?search_query=%s" % search)
+            uri = "https://www.youtube.com/"\
+                  "results?search_query=%s" % search
+            f = Gio.File.new_for_uri()
             (status, data, tag) = f.load_contents(None)
+            kill_gfvsd_cache(uri)
             if not status:
                 return None
 

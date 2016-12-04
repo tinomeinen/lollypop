@@ -13,7 +13,7 @@
 from gi.repository import Gio
 
 import xml.etree.ElementTree as xml
-from lollypop.utils import get_network_available
+from lollypop.utils import get_network_available, kill_gfvsd_cache
 
 
 class TuneItem:
@@ -43,6 +43,7 @@ class TuneIn:
             raise
         f = Gio.File.new_for_uri(url)
         (status, data, tag) = f.load_contents()
+        kill_gfvsd_cache(url)
         if not status:
             raise
         root = xml.fromstring(data)

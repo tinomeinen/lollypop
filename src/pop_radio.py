@@ -20,6 +20,7 @@ from lollypop.objects import Track
 from lollypop.widgets_rating import RatingWidget
 from lollypop.define import Lp, ArtSize
 from lollypop.art import Art
+from lollypop.utils import kill_gfvsd_cache
 
 
 # Show a popover with radio logos from the web
@@ -123,6 +124,7 @@ class RadioPopover(Gtk.Popover):
             try:
                 f = Gio.File.new_for_uri(url)
                 (status, data, tag) = f.load_contents()
+                kill_gfvsd_cache(url)
                 if status:
                     stream = Gio.MemoryInputStream.new_from_data(data, None)
             except:
