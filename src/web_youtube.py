@@ -182,7 +182,7 @@ class WebYouTube:
                             True)
             uri = "https://www.youtube.com/"\
                   "results?search_query=%s" % search
-            f = Gio.File.new_for_uri()
+            f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             kill_gfvsd_cache(uri)
             if not status:
