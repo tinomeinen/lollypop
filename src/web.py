@@ -10,10 +10,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import GLib, Gio
+from gi.repository import GLib
 
 from threading import Thread
 from time import time
+from urllib.request import urlopen
 
 from lollypop.sqlcursor import SqlCursor
 from lollypop.tagreader import TagReader
@@ -21,7 +22,6 @@ from lollypop.objects import Track, Album
 from lollypop.web_youtube import WebYouTube
 from lollypop.web_jgm90 import WebJmg90
 from lollypop.define import Lp, DbPersistent, Type
-from lollypop.utils import kill_gfvsd_cache
 
 
 class Web:
@@ -193,8 +193,5 @@ class Web:
             @param item as SearchItem
             @param album id as int
         """
-        f = Gio.File.new_for_uri(item.cover)
-        (status, data, tag) = f.load_contents(None)
-        kill_gfvsd_cache(item.cover)
-        if status:
-            Lp().art.save_album_artwork(data, album_id)
+        data = urlopen(item.cover).read()
+        Lp().art.save_album_artwork(data, album_id)

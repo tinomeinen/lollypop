@@ -14,12 +14,13 @@ from gi.repository import Gtk, GLib, Gio, GdkPixbuf, Gdk, Pango
 
 from threading import Thread
 from gettext import gettext as _
+from urllib.request import urlopen
 
 from lollypop.radios import Radios
 from lollypop.tunein import TuneIn
 from lollypop.define import Lp, ArtSize, WindowSize
 from lollypop.art import Art
-from lollypop.utils import get_network_available, kill_gfvsd_cache
+from lollypop.utils import get_network_available
 
 
 class TuneinPopover(Gtk.Popover):
@@ -253,13 +254,10 @@ class TuneinPopover(Gtk.Popover):
         while self.__covers_to_download and url == self.__current_url:
             (item, image) = self.__covers_to_download.pop(0)
             try:
-                f = Gio.File.new_for_uri(item.LOGO)
-                (status, data, tag) = f.load_contents()
-                kill_gfvsd_cache(item.LOGO)
-                if status:
-                    stream = Gio.MemoryInputStream.new_from_data(data, None)
-                    if stream is not None:
-                        GLib.idle_add(self.__set_image, image, stream)
+                data = urlopen(item.LOGO).read()
+                stream = Gio.MemoryInputStream.new_from_data(data, None)
+                if stream is not None:
+                    GLib.idle_add(self.__set_image, image, stream)
             except Exception as e:
                 GLib.idle_add(image.set_from_icon_name,
                               "image-missing",
@@ -309,11 +307,8 @@ class TuneinPopover(Gtk.Popover):
         url = item.URL
         # Tune in embbed uri in ashx files, so get content if possible
         try:
-            f = Gio.File.new_for_uri(url)
-            (status, data, tag) = f.load_contents()
-            kill_gfvsd_cache(url)
-            if status:
-                url = data.decode('utf-8').split('\n')[0]
+            data = urlopen(url).read()
+            url = data.decode('utf-8').split('\n')[0]
         except Exception as e:
             print("TuneinPopover::_add_radio: %s" % e)
         self.__radios_manager.add(item.TEXT.replace('/', '-'), url)

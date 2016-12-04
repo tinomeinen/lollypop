@@ -10,10 +10,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gio
-
 import xml.etree.ElementTree as xml
-from lollypop.utils import get_network_available, kill_gfvsd_cache
+from urllib.request import urlopen
+
+from lollypop.utils import get_network_available
 
 
 class TuneItem:
@@ -41,11 +41,7 @@ class TuneIn:
         items = []
         if not get_network_available():
             raise
-        f = Gio.File.new_for_uri(url)
-        (status, data, tag) = f.load_contents()
-        kill_gfvsd_cache(url)
-        if not status:
-            raise
+        data = urlopen(url).read()
         root = xml.fromstring(data)
         for child in root.iter('outline'):
             try:

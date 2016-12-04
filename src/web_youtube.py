@@ -10,13 +10,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import GLib, Gio
+from gi.repository import GLib
 
 import json
 from re import sub
+from urllib.request import urlopen
+from urllib.parse import quote_plus
 
 from lollypop.define import Lp, GOOGLE_API_ID
-from lollypop.utils import escape, kill_gfvsd_cache
+from lollypop.utils import escape
 
 
 class WebYouTube:
@@ -87,10 +89,7 @@ class WebYouTube:
             artist = item.artists[0]
         unescaped = "%s %s" % (artist,
                                item.name)
-        search = GLib.uri_escape_string(
-                            unescaped.replace(' ', '+'),
-                            None,
-                            True)
+        search = quote_plus(unescaped, '/')
         key = Lp().settings.get_value('cs-api-key').get_string()
         try:
             uri = "https://www.googleapis.com/youtube/v3/"\
@@ -98,28 +97,25 @@ class WebYouTube:
                   "type=video&key=%s&cx=%s" % (search,
                                                key,
                                                GOOGLE_API_ID)
-            f = Gio.File.new_for_uri(uri)
-            (status, data, tag) = f.load_contents(None)
-            kill_gfvsd_cache(uri)
-            if status:
-                decode = json.loads(data.decode('utf-8'))
-                dic = {}
-                best = self.__BAD_SCORE
-                for i in decode['items']:
-                    score = self.__get_youtube_score(i['snippet']['title'],
-                                                     item.name,
-                                                     artist,
-                                                     item.album)
-                    if score < best:
-                        best = score
-                    elif score == best:
-                        continue  # Keep first result
-                    dic[score] = i['id']['videoId']
-                # Return url from first dic item
-                if best == self.__BAD_SCORE:
-                    return None
-                else:
-                    return dic[best]
+            data = urlopen(uri).read()
+            decode = json.loads(data.decode('utf-8'))
+            dic = {}
+            best = self.__BAD_SCORE
+            for i in decode['items']:
+                score = self.__get_youtube_score(i['snippet']['title'],
+                                                 item.name,
+                                                 artist,
+                                                 item.album)
+                if score < best:
+                    best = score
+                elif score == best:
+                    continue  # Keep first result
+                dic[score] = i['id']['videoId']
+            # Return url from first dic item
+            if best == self.__BAD_SCORE:
+                return None
+            else:
+                return dic[best]
         except IndexError:
             pass
         except Exception as e:
@@ -176,18 +172,10 @@ class WebYouTube:
 
             unescaped = "%s %s" % (artist,
                                    item.name)
-            search = GLib.uri_escape_string(
-                            unescaped.replace(' ', '+'),
-                            None,
-                            True)
+            search = quote_plus(unescaped, '/')
             uri = "https://www.youtube.com/"\
                   "results?search_query=%s" % search
-            f = Gio.File.new_for_uri(uri)
-            (status, data, tag) = f.load_contents(None)
-            kill_gfvsd_cache(uri)
-            if not status:
-                return None
-
+            data = urlopen(uri).read()
             html = data.decode('utf-8')
             soup = BeautifulSoup(html, 'html.parser')
             ytems = []

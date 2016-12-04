@@ -14,12 +14,13 @@ from gi.repository import Gtk, GLib, Gio, Gdk, GdkPixbuf
 
 from gettext import gettext as _
 from threading import Thread
+from urllib.request import urlopen
 
 from lollypop.define import Lp, ArtSize, Type, DbPersistent
 from lollypop.objects import Track, Album
 from lollypop.pop_menu import TrackMenuPopover, TrackMenu
 from lollypop.pop_album import AlbumPopover
-from lollypop.utils import noaccents, get_network_available, kill_gfvsd_cache
+from lollypop.utils import noaccents, get_network_available
 
 
 class SearchRow(Gtk.ListBoxRow):
@@ -434,19 +435,16 @@ class SearchPopover(Gtk.Popover):
             @param row as SearchRow
         """
         try:
-            f = Gio.File.new_for_uri(uri)
-            (status, data, tag) = f.load_contents(None)
-            kill_gfvsd_cache(uri)
-            if status:
-                stream = Gio.MemoryInputStream.new_from_data(data,
-                                                             None)
-                pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
-                                                   stream,
-                                                   ArtSize.MEDIUM,
-                                                   -1,
-                                                   True,
-                                                   None)
-                GLib.idle_add(row.set_cover, pixbuf)
+            data = urlopen(uri).read()
+            stream = Gio.MemoryInputStream.new_from_data(data,
+                                                         None)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(
+                                               stream,
+                                               ArtSize.MEDIUM,
+                                               -1,
+                                               True,
+                                               None)
+            GLib.idle_add(row.set_cover, pixbuf)
         except:
             pass
 

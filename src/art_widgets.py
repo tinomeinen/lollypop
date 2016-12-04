@@ -14,10 +14,11 @@ from gi.repository import Gtk, Gdk, GLib, Gio, GdkPixbuf
 
 from threading import Thread
 from gettext import gettext as _
+from urllib.request import urlopen
 
 from lollypop.cache import InfoCache
 from lollypop.define import Lp, ArtSize, Type
-from lollypop.utils import get_network_available, kill_gfvsd_cache
+from lollypop.utils import get_network_available
 
 
 class ArtworkSearch(Gtk.Bin):
@@ -245,11 +246,8 @@ class ArtworkSearch(Gtk.Bin):
         if urls and self.__loading:
             url = urls.pop(0)
             try:
-                f = Gio.File.new_for_uri(url)
-                (status, data, tag) = f.load_contents()
-                kill_gfvsd_cache(url)
-                if status:
-                    GLib.idle_add(self.__add_pixbuf, data)
+                data = urlopen(url).read()
+                GLib.idle_add(self.__add_pixbuf, data)
             except Exception as e:
                 print("ArtworkSearch::__add_pixbufs: %s" % e)
             if self.__loading:

@@ -10,11 +10,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import GLib, Gio
-
 import json
+from urllib.request import urlopen
+from urllib.parse import quote
 
-from lollypop.utils import escape, kill_gfvsd_cache
+from lollypop.utils import escape
 
 
 class WebJmg90:
@@ -29,11 +29,8 @@ class WebJmg90:
             @return content uri as str/None
         """
         try:
-            f = Gio.File.new_for_uri(uri)
-            (status, data, tag) = f.load_contents(None)
-            kill_gfvsd_cache(uri)
-            if status:
-                return data.decode('utf-8')
+            data = urlopen(uri).read()
+            return data.decode('utf-8')
         except IndexError:
             pass
         except Exception as e:
@@ -77,25 +74,20 @@ class WebJmg90:
             artist = item.artists[0]
         unescaped = "%s %s" % (artist,
                                item.name)
-        search = GLib.uri_escape_string(unescaped,
-                                        None,
-                                        True)
+        search = quote(unescaped)
         try:
             uri = "http://app.jgm90.com/cmapi/search/"\
                   "%s/1/10" % search
-            f = Gio.File.new_for_uri(uri)
-            (status, data, tag) = f.load_contents(None)
-            kill_gfvsd_cache(uri)
-            if status:
-                decode = json.loads(data.decode('utf-8'))
-                for song in decode['result']['songs']:
-                    try:
-                        song_artist = escape(
-                                            song['artists'][0]['name'].lower())
-                        if song_artist == escape(artist.lower()):
-                            return song['id']
-                    except:
-                        pass
+            data = urlopen(uri).read()
+            decode = json.loads(data.decode('utf-8'))
+            for song in decode['result']['songs']:
+                try:
+                    song_artist = escape(
+                                        song['artists'][0]['name'].lower())
+                    if song_artist == escape(artist.lower()):
+                        return song['id']
+                except:
+                    pass
         except IndexError:
             pass
         except KeyError:

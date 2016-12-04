@@ -18,11 +18,11 @@ import json
 from threading import Thread
 from time import sleep
 from locale import getdefaultlocale
-
+from urllib.request import urlopen
 
 from lollypop.web import Web
 from lollypop.define import DbPersistent, Lp
-from lollypop.utils import debug, get_network_available, kill_gfvsd_cache
+from lollypop.utils import debug, get_network_available
 from lollypop.search_item import SearchItem
 
 
@@ -218,10 +218,8 @@ class ItunesCharts:
         try:
             debug("ItunesCharts::__get_album(): %s" % itunes_id)
             url = self.__INFO % (itunes_id, language)
-            f = Gio.File.new_for_uri(url)
-            (status, data, tag) = f.load_contents(self.__cancel)
-            kill_gfvsd_cache(url)
-            if not status or self.__stop:
+            data = urlopen(url).read()
+            if self.__stop:
                 return
             decode = json.loads(data.decode('utf-8'))
             item = decode['results'][0]
@@ -261,10 +259,8 @@ class ItunesCharts:
         """
         items = []
         try:
-            f = Gio.File.new_for_uri(url)
-            (status, data, tag) = f.load_contents(self.__cancel)
-            kill_gfvsd_cache(url)
-            if not status or self.__stop:
+            data = urlopen(url).read()
+            if self.__stop:
                 return []
             root = xml.fromstring(data)
             for child in root:
