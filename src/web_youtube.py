@@ -16,7 +16,7 @@ import json
 from re import sub
 
 from lollypop.define import Lp, GOOGLE_API_ID
-from lollypop.utils import escape, kill_gfvsd_cache
+from lollypop.utils import escape, kill_gvfsd_cache
 
 
 class WebYouTube:
@@ -100,8 +100,8 @@ class WebYouTube:
                                                GOOGLE_API_ID)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 dic = {}
                 best = self.__BAD_SCORE
@@ -184,10 +184,9 @@ class WebYouTube:
                   "results?search_query=%s" % search
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
-            kill_gfvsd_cache(uri)
             if not status:
                 return None
-
+            kill_gvfsd_cache(uri)
             html = data.decode('utf-8')
             soup = BeautifulSoup(html, 'html.parser')
             ytems = []

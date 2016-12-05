@@ -20,7 +20,7 @@ from lollypop.define import Lp, Type
 from lollypop.objects import Track
 
 
-def kill_gfvsd_cache(uri):
+def kill_gvfsd_cache(uri):
         """
             Workaround https://bugzilla.gnome.org/show_bug.cgi?id=775600
         """

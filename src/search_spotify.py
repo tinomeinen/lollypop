@@ -13,7 +13,7 @@
 from gi.repository import GLib, Gio
 
 from lollypop.search_item import SearchItem
-from lollypop.utils import kill_gfvsd_cache
+from lollypop.utils import kill_gvfsd_cache
 
 import json
 
@@ -41,8 +41,8 @@ class SpotifySearch:
                   "&type=track" % formated
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents(self._cancel)
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 tracks = []
                 for item in decode['tracks']['items']:
@@ -85,8 +85,8 @@ class SpotifySearch:
                   "tracks/%s" % track_id
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents(self._cancel)
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 return decode['album']['id']
         except Exception as e:
@@ -103,8 +103,8 @@ class SpotifySearch:
                   "albums/%s" % album_id
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents(self._cancel)
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 album_item = SearchItem()
                 album_item.name = album_item.album_name = decode['name']
@@ -153,8 +153,8 @@ class SpotifySearch:
                   "&type=artist" % formated
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents(self._cancel)
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 # For each album, get cover and tracks
                 artists = []
@@ -168,8 +168,8 @@ class SpotifySearch:
                           "v1/artists/%s/albums" % artist_id
                     s = Gio.File.new_for_uri(uri)
                     (status, data, tag) = s.load_contents(self._cancel)
-                    kill_gfvsd_cache(uri)
                     if status:
+                        kill_gvfsd_cache(uri)
                         decode = json.loads(data.decode('utf-8'))
                         albums = []
                         for item in decode['items']:
@@ -189,8 +189,8 @@ class SpotifySearch:
                               "albums/%s" % album_item.ex_id
                         s = Gio.File.new_for_uri(uri)
                         (status, data, tag) = s.load_contents(self._cancel)
-                        kill_gfvsd_cache(uri)
                         if status:
+                            kill_gvfsd_cache(uri)
                             decode = json.loads(data.decode('utf-8'))
                             for item in decode['tracks']['items']:
                                 track_item = SearchItem()
@@ -231,8 +231,8 @@ class SpotifySearch:
                   "&type=album" % formated
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents(self._cancel)
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 # For each album, get cover and tracks
                 for item in decode['albums']['items']:
@@ -245,8 +245,8 @@ class SpotifySearch:
                           "albums/%s" % item['id']
                     s = Gio.File.new_for_uri(uri)
                     (status, data, tag) = s.load_contents(self._cancel)
-                    kill_gfvsd_cache(uri)
                     if status:
+                        kill_gvfsd_cache(uri)
                         decode = json.loads(data.decode('utf-8'))
                         for item in decode['tracks']['items']:
                             track_item = SearchItem()

@@ -17,7 +17,7 @@ import json
 
 from lollypop.cache import InfoCache
 from lollypop.define import Lp, GOOGLE_API_ID, Type
-from lollypop.utils import debug, get_network_available, kill_gfvsd_cache
+from lollypop.utils import debug, get_network_available, kill_gvfsd_cache
 
 
 class Downloader:
@@ -86,8 +86,8 @@ class Downloader:
                    GLib.uri_escape_string(search, "", False))
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents()
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 if decode is None:
                     return urls
@@ -136,8 +136,8 @@ class Downloader:
                   "q=%s&output=json&index=0&limit=1&" % artist_formated
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 return (decode['data'][0]['picture_xl'], None)
         except Exception as e:
@@ -158,8 +158,8 @@ class Downloader:
                   "&type=artist" % artist_formated
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 for item in decode['artists']['items']:
                     if item['name'].lower() == artist.lower():
@@ -184,8 +184,8 @@ class Downloader:
                   "q=%s&output=json" % album_formated
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 url = None
                 for item in decode['data']:
@@ -195,7 +195,8 @@ class Downloader:
                 if url is not None:
                     s = Gio.File.new_for_uri(url)
                     (status, image, tag) = s.load_contents()
-                    kill_gfvsd_cache(url)
+                    if status:
+                        kill_gvfsd_cache(url)
         except Exception as e:
             print("Downloader::__get_deezer_album_artwork: %s" % e)
         return image
@@ -217,8 +218,8 @@ class Downloader:
                   "&type=artist" % artist_formated
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 for item in decode['artists']['items']:
                     artists_spotify_ids.append(item['id'])
@@ -238,7 +239,8 @@ class Downloader:
                     if url is not None:
                         s = Gio.File.new_for_uri(url)
                         (status, image, tag) = s.load_contents()
-                        kill_gfvsd_cache(url)
+                        if status:
+                            kill_gvfsd_cache(url)
                     break
         except Exception as e:
             print("Downloader::_get_album_art_spotify: %s [%s/%s]" %
@@ -261,8 +263,8 @@ class Downloader:
                   "?entity=album&term=%s" % album_formated
             s = Gio.File.new_for_uri()
             (status, data, tag) = s.load_contents()
-            kill_gfvsd_cache(uri)
             if status:
+                kill_gvfsd_cache(uri)
                 decode = json.loads(data.decode('utf-8'))
                 for item in decode['results']:
                     if item['artistName'].lower() == artist.lower():
@@ -270,7 +272,8 @@ class Downloader:
                                                            '512x512')
                         s = Gio.File.new_for_uri(url)
                         (status, image, tag) = s.load_contents()
-                        kill_gfvsd_cache(url)
+                        if status:
+                            kill_gvfsd_cache(url)
                         break
         except Exception as e:
             print("Downloader::_get_album_art_itunes: %s [%s/%s]" %
@@ -293,7 +296,8 @@ class Downloader:
                 if url is not None:
                     s = Gio.File.new_for_uri(url)
                     (status, image, tag) = s.load_contents()
-                    kill_gfvsd_cache(url)
+                    if status:
+                        kill_gvfsd_cache(url)
             except Exception as e:
                 print("Downloader::_get_album_art_lastfm: %s [%s/%s]" %
                       (e, artist, album))
@@ -325,8 +329,8 @@ class Downloader:
                     if url is not None:
                         s = Gio.File.new_for_uri(url)
                         (status, data, tag) = s.load_contents()
-                        kill_gfvsd_cache(url)
                         if status:
+                            kill_gvfsd_cache(url)
                             artwork_set = True
                             InfoCache.add(artist, content, data, api)
                             debug("Downloader::__cache_artists_info(): %s"
