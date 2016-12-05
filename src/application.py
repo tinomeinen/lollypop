@@ -221,6 +221,9 @@ class Application(Gtk.Application):
         """
             Save window position and view
         """
+        if self.charts is not None:
+            self.charts.stop()
+        self.gvfsd_fix.stop()
         if self.__is_fs:
             return
         if self.settings.get_value('save-state'):

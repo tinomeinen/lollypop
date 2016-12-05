@@ -43,12 +43,11 @@ class TuneIn:
         items = []
         if not get_network_available():
             raise
-        Lp().gvfsd_fix.del_uri(url)
+        Lp().gvfsd_fix.prevent_unmount(url)
         f = Gio.File.new_for_uri(url)
         (status, data, tag) = f.load_contents()
         if not status:
             raise
-        Lp().gvfsd_fix.add_uri(url)
         root = xml.fromstring(data)
         for child in root.iter('outline'):
             try:

@@ -26,10 +26,9 @@ class GvfsdFix:
         """
             Init workaround
         """
-        self.__uris = []
+        self.__mounts = []
+        self.__times = {}
         self.__cancel = Gio.Cancellable.new()
-        self.__current_uri = None
-        self.__deleting = False
         self.__bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         self.__mounttracker = Gio.DBusProxy.new_sync(
                                     self.__bus, Gio.DBusProxyFlags.NONE, None,
@@ -37,127 +36,100 @@ class GvfsdFix:
                                     '/org/gtk/vfs/mounttracker',
                                     'org.gtk.vfs.MountTracker',
                                     None)
+        GLib.timeout_add(60000, self.__scanner)
 
-    def add_uri(self, uri):
+    def prevent_unmount(self, uri):
         """
-            Add a new uri to queue
-            Start queue if needed
+            Prevent uri unmount for 60 seconds
             @param uri as str
         """
-        self.__uris.append((uri, time()))
-        if not self.__deleting:
-            GLib.idle_add(self.__unmount_shares)
-
-    def del_uri(self, uri):
-        """
-            Remove uri from queue
-            @param uri as str
-        """
-        if uri == self.__current_uri:
-            self.__cancel.cancel()
-        for (_uri, _time) in self.__uris:
-            if uri == _uri:
-                self.__uris.remove((uri, _time))
+        for _time in self.__times:
+            if self.__times[_time][1].find(uri) != -1:
+                debug("prevent_unmount(): %s" % uri)
+                del self.__times[_time]
                 break
+
+    def stop(self):
+        """
+            Force clean for all uris
+        """
+        self.__cancel.cancel()
 
 #######################
 # PRIVATE             #
 #######################
-    def __unmount_shares(self):
+    def __scanner(self):
         """
-            Unmount share mounted since 1 min
+            Scanner for mounted uris
         """
-        debug("unmount_shares()")
-        if not self.__uris:
-            self.__deleting = False
-            return
-        self.__deleting = True
-        (uri, _time) = self.__uris[0]
-        if time() - _time > 60:
-            self.__unmount_share(uri)
-        else:
-            GLib.timeout_add(60000, self.__unmount_shares)
-
-    def __unmount_share(self, uri):
-        """
-            Unmount share for uri
-            @param uri as str
-            @return unmounted as bool
-        """
-        debug("unmount_share(): %s" % uri)
+        debug("__scanner()")
         try:
-            self.__cancel.reset()
-            self.__current_uri = uri
             self.__mounttracker.call('ListMounts', None,
                                      Gio.DBusCallFlags.NO_AUTO_START,
-                                     500, self.__cancel, self.__on_list_mounts,
-                                     uri)
+                                     500, self.__cancel, self.__on_list_mounts)
         except Exception as e:
-            print("GvfsdFix::__unmount_share():", e)
-            self.__current_uri = None
-            GLib.idle_add(self.__unmount_shares)
+            print("GvfsdFix::__scanner():", e)
+            GLib.timeout_add(60000, self.__scanner)
 
-    def __on_list_mounts(self, src, res, uri):
+    def __on_list_mounts(self, src, res):
         """
             Unmount result
             @param src as GObject.Object
             @param res as Gio.Task
             @param uri as str
         """
-        debug("__on_list_mounts(): %s" % uri)
+        debug("__on_list_mounts()")
         try:
             mount = None
+            # Add new uris to list
             for item in src.call_finish(res)[0]:
-                item_uri = GLib.uri_unescape_string(item[3], None)
-                if item_uri.find(uri) != -1:
-                    mount = item[1]
-                    debug("unmount_share(): %s" % mount)
-                    break
-
-            # Uri doesn't exist, remove it
-            # Can this happen?
-            if mount is None:
-                self.del_uri(uri)
-                GLib.idle_add(self.__unmount_shares)
-                return
-
-            http = Gio.DBusProxy.new_sync(
-                            self.__bus, Gio.DBusProxyFlags.NONE, None,
-                            'org.gtk.vfs.mountpoint_http',
-                            mount,
-                            'org.gtk.vfs.Mount',
-                            self.__cancel)
-            http.call('Unmount',
-                      GLib.Variant('(sou)',
-                                   ('org.gtk.vfs.mountpoint_http',
+                if not item[3].startswith("http:uri"):
+                    continue
+                mount = item[1]
+                uri = GLib.uri_unescape_string(item[3], None)
+                if mount not in self.__mounts:
+                    self.__mounts.append(mount)
+                    self.__times[time()] = (mount, uri)
+            # Unmount old shares
+            for _time in self.__times.keys():
+                if time() - _time > 60:
+                    (mount, uri) = self.__times[_time]
+                    http = Gio.DBusProxy.new_sync(
+                                    self.__bus, Gio.DBusProxyFlags.NONE, None,
+                                    'org.gtk.vfs.mountpoint_http',
                                     mount,
-                                    0),),
-                      Gio.DBusCallFlags.NO_AUTO_START,
-                      500, self.__cancel, self.__on_unmount, uri)
+                                    'org.gtk.vfs.Mount',
+                                    self.__cancel)
+                    http.call('Unmount',
+                              GLib.Variant('(sou)',
+                                           ('org.gtk.vfs.mountpoint_http',
+                                            mount,
+                                            0),),
+                              Gio.DBusCallFlags.NO_AUTO_START,
+                              500, self.__cancel, self.__on_unmount,
+                              _time)
+            GLib.timeout_add(60000, self.__scanner)
         except Exception as e:
             print("GvfsdFix::__on_list_mounts():", e)
-            self.__current_uri = None
-            GLib.idle_add(self.__unmount_shares)
+            GLib.timeout_add(60000, self.__scanner)
 
-    def __on_unmount(self, src, res, uri):
+    def __on_unmount(self, src, res, _time):
         """
             Check result
             @param src as GObject.Object
             @param res as Gio.Task
-            @param uri as str
+            @param time as int
         """
+        (mount, uri) = self.__times[_time]
         debug("__on_unmount(): %s" % uri)
         try:
-            self.del_uri(uri)
             f = Gio.File.new_for_uri(uri)
             # Needed to force gvfs to invalidate cache
             try:
                 f.load_contents_async(None, None)
             except:
                 pass
-            self.__current_uri = None
-            GLib.idle_add(self.__unmount_shares)
+            del self.__times[_time]
+            self.__mounts.remove(mount)
         except Exception as e:
             print("GvfsdFix::__on_unmount():", e)
-            self.__current_uri = None
-            GLib.idle_add(self.__unmount_shares)

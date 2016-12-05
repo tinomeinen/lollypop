@@ -121,11 +121,10 @@ class RadioPopover(Gtk.Popover):
             url = self._urls.pop()
             stream = None
             try:
-                Lp().gvfsd_fix.del_uri(url)
+                Lp().gvfsd_fix.prevent_unmount(url)
                 f = Gio.File.new_for_uri(url)
                 (status, data, tag) = f.load_contents()
                 if status:
-                    Lp().gvfsd_fix.add_uri(url)
                     stream = Gio.MemoryInputStream.new_from_data(data, None)
             except:
                 if self._thread:

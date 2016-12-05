@@ -98,11 +98,10 @@ class WebYouTube:
                   "type=video&key=%s&cx=%s" % (search,
                                                key,
                                                GOOGLE_API_ID)
-            Lp().gvfsd_fix.del_uri(uri)
+            Lp().gvfsd_fix.prevent_unmount(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
-                Lp().gvfsd_fix.add_uri(uri)
                 decode = json.loads(data.decode('utf-8'))
                 dic = {}
                 best = self.__BAD_SCORE
@@ -183,12 +182,11 @@ class WebYouTube:
                             True)
             uri = "https://www.youtube.com/"\
                   "results?search_query=%s" % search
-            Lp().gvfsd_fix.del_uri(uri)
+            Lp().gvfsd_fix.prevent_unmount(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if not status:
                 return None
-            Lp().gvfsd_fix.add_uri(uri)
             html = data.decode('utf-8')
             soup = BeautifulSoup(html, 'html.parser')
             ytems = []

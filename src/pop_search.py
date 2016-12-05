@@ -434,11 +434,10 @@ class SearchPopover(Gtk.Popover):
             @param row as SearchRow
         """
         try:
-            Lp().gvfsd_fix.del_uri(uri)
+            Lp().gvfsd_fix.prevent_unmount(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
-                Lp().gvfsd_fix.add_uri(uri)
                 stream = Gio.MemoryInputStream.new_from_data(data,
                                                              None)
                 pixbuf = GdkPixbuf.Pixbuf.new_from_stream_at_scale(

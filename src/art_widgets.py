@@ -245,11 +245,10 @@ class ArtworkSearch(Gtk.Bin):
         if urls and self.__loading:
             url = urls.pop(0)
             try:
-                Lp().gvfsd_fix.del_uri(url)
+                Lp().gvfsd_fix.prevent_unmount(url)
                 f = Gio.File.new_for_uri(url)
                 (status, data, tag) = f.load_contents()
                 if status:
-                    Lp().gvfsd_fix.add_uri(url)
                     GLib.idle_add(self.__add_pixbuf, data)
             except Exception as e:
                 print("ArtworkSearch::__add_pixbufs: %s" % e)

@@ -111,10 +111,9 @@ class SpotifyCharts:
         """
         ids = []
         try:
-            Lp().gvfsd_fix.del_uri(url)
+            Lp().gvfsd_fix.prevent_unmount(url)
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents(self.__cancel)
-            Lp().gvfsd_fix.add_uri(url)
             if not status or self._stop:
                 return []
             for line in data.decode("utf-8").split('\n'):

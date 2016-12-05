@@ -30,11 +30,10 @@ class WebJmg90:
             @return content uri as str/None
         """
         try:
-            Lp().gvfsd_fix.del_uri(uri)
+            Lp().gvfsd_fix.prevent_unmount(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
-                Lp().gvfsd_fix.add_uri(uri)
                 return data.decode('utf-8')
         except IndexError:
             pass
@@ -85,11 +84,10 @@ class WebJmg90:
         try:
             uri = "http://app.jgm90.com/cmapi/search/"\
                   "%s/1/10" % search
-            Lp().gvfsd_fix.del_uri(uri)
+            Lp().gvfsd_fix.prevent_unmount(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
-                Lp().gvfsd_fix.add_uri(uri)
                 decode = json.loads(data.decode('utf-8'))
                 for song in decode['result']['songs']:
                     try:
