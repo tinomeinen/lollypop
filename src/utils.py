@@ -267,7 +267,7 @@ def _set_loved_on_lastfm(track_id, loved):
         @param loved Add to loved playlist if `True`; remove if `False`
     """
     # Love the track on lastfm
-    if Gio.NetworkMonitor.get_default().get_network_available() and\
+    if get_network_available() and\
             Lp().lastfm.is_auth:
         title = Lp().tracks.get_name(track_id)
         artists = ", ".join(Lp().tracks.get_artists(track_id))
