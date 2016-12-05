@@ -12,7 +12,7 @@
 
 from gi.repository import Gio, GLib
 
-from time import time, sleep
+from time import time
 
 from lollypop.utils import debug
 
@@ -27,6 +27,7 @@ class GvfsdFix:
             Init workaround
         """
         self.__uris = []
+        self.__cancel = Gio.Cancellable.new()
         self.__current_uri = None
         self.__deleting = False
         self.__bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
@@ -52,9 +53,8 @@ class GvfsdFix:
             Remove uri from queue
             @param uri as str
         """
-        # Block caller while we are already trying to unmount a share
-        while uri == self.__current_uri:
-            sleep(1)
+        if uri == self.__current_uri:
+            self.__cancel.cancel()
         for (_uri, _time) in self.__uris:
             if uri == _uri:
                 self.__uris.remove((uri, _time))
@@ -86,10 +86,11 @@ class GvfsdFix:
         """
         debug("unmount_share(): %s" % uri)
         try:
+            self.__cancel.reset()
             self.__current_uri = uri
             self.__mounttracker.call('ListMounts', None,
                                      Gio.DBusCallFlags.NO_AUTO_START,
-                                     500, None, self.__on_list_mounts,
+                                     500, self.__cancel, self.__on_list_mounts,
                                      uri)
         except Exception as e:
             print("GvfsdFix::__unmount_share():", e)
@@ -125,14 +126,14 @@ class GvfsdFix:
                             'org.gtk.vfs.mountpoint_http',
                             mount,
                             'org.gtk.vfs.Mount',
-                            None)
+                            self.__cancel)
             http.call('Unmount',
                       GLib.Variant('(sou)',
                                    ('org.gtk.vfs.mountpoint_http',
                                     mount,
                                     0),),
                       Gio.DBusCallFlags.NO_AUTO_START,
-                      500, None, self.__on_unmount, uri)
+                      500, self.__cancel, self.__on_unmount, uri)
         except Exception as e:
             print("GvfsdFix::__on_list_mounts():", e)
             self.__current_uri = None
