@@ -60,6 +60,12 @@ def kill_gvfsd_cache(uri):
                                           0),),
                             Gio.DBusCallFlags.NO_AUTO_START,
                             500, None)
+                    f = Gio.File.new_for_uri(uri)
+                    # Needed to force gvfs to invalidate cache
+                    try:
+                        f.load_contents()
+                    except:
+                        pass
             except:
                 debug("do_kill(): Retry %s" % uri)
                 GLib.timeout_add(5000, do_kill_thread, uri)
