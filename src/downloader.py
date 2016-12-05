@@ -84,6 +84,7 @@ class Downloader:
                   (cs_api_key,
                    GOOGLE_API_ID,
                    GLib.uri_escape_string(search, "", False))
+            Lp().gvfsd_fix.del_uri(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents()
             if status:
@@ -134,6 +135,7 @@ class Downloader:
                                 artist, None, True).replace(' ', '+')
             uri = "https://api.deezer.com/search/artist/?"\
                   "q=%s&output=json&index=0&limit=1&" % artist_formated
+            Lp().gvfsd_fix.del_uri(uri)
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
             if status:
@@ -156,6 +158,7 @@ class Downloader:
                                 artist, None, True).replace(' ', '+')
             uri = "https://api.spotify.com/v1/search?q=%s"\
                   "&type=artist" % artist_formated
+            Lp().gvfsd_fix.del_uri(uri)
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
             if status:
@@ -182,6 +185,7 @@ class Downloader:
             album_formated = GLib.uri_escape_string(album, None, True)
             uri = "https://api.deezer.com/search/album/?"\
                   "q=%s&output=json" % album_formated
+            Lp().gvfsd_fix.del_uri(uri)
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
             if status:
@@ -193,6 +197,7 @@ class Downloader:
                         url = item['cover_xl']
                         break
                 if url is not None:
+                    Lp().gvfsd_fix.del_uri(url)
                     s = Gio.File.new_for_uri(url)
                     (status, image, tag) = s.load_contents()
                     if status:
@@ -216,6 +221,7 @@ class Downloader:
                                 artist, None, True).replace(' ', '+')
             uri = "https://api.spotify.com/v1/search?q=%s"\
                   "&type=artist" % artist_formated
+            Lp().gvfsd_fix.del_uri(uri)
             s = Gio.File.new_for_uri(uri)
             (status, data, tag) = s.load_contents()
             if status:
@@ -237,6 +243,7 @@ class Downloader:
                             break
 
                     if url is not None:
+                        Lp().gvfsd_fix.del_uri(url)
                         s = Gio.File.new_for_uri(url)
                         (status, image, tag) = s.load_contents()
                         if status:
@@ -261,6 +268,7 @@ class Downloader:
                                 album, None, True).replace(' ', '+')
             uri = "https://itunes.apple.com/search"\
                   "?entity=album&term=%s" % album_formated
+            Lp().gvfsd_fix.del_uri(uri)
             s = Gio.File.new_for_uri()
             (status, data, tag) = s.load_contents()
             if status:
@@ -270,6 +278,7 @@ class Downloader:
                     if item['artistName'].lower() == artist.lower():
                         url = item['artworkUrl60'].replace('60x60',
                                                            '512x512')
+                        Lp().gvfsd_fix.del_uri(url)
                         s = Gio.File.new_for_uri(url)
                         (status, image, tag) = s.load_contents()
                         if status:
@@ -294,6 +303,7 @@ class Downloader:
                 last_album = Lp().lastfm.get_album(artist, album)
                 url = last_album.get_cover_image(4)
                 if url is not None:
+                    Lp().gvfsd_fix.del_uri(url)
                     s = Gio.File.new_for_uri(url)
                     (status, image, tag) = s.load_contents()
                     if status:
@@ -327,6 +337,7 @@ class Downloader:
                     method = getattr(self, helper)
                     (url, content) = method(artist)
                     if url is not None:
+                        Lp().gvfsd_fix.del_uri(url)
                         s = Gio.File.new_for_uri(url)
                         (status, data, tag) = s.load_contents()
                         if status:

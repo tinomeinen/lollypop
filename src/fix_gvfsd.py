@@ -12,7 +12,7 @@
 
 from gi.repository import Gio, GLib
 
-from time import time
+from time import time, sleep
 
 from lollypop.utils import debug
 
@@ -27,6 +27,7 @@ class GvfsdFix:
             Init workaround
         """
         self.__uris = []
+        self.__currrent_uri = None
         self.__deleting = False
         self.__bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         self.__mounttracker = Gio.DBusProxy.new_sync(
@@ -51,6 +52,9 @@ class GvfsdFix:
             Remove uri from queue
             @param uri as str
         """
+        # Block caller while we are already trying to unmount a share
+        while uri == self.__current_uri:
+            sleep(1)
         for (_uri, _time) in self.__uris:
             if uri == _uri:
                 self.__uris.remove((uri, _time))
@@ -82,12 +86,14 @@ class GvfsdFix:
         """
         debug("unmount_share(): %s" % uri)
         try:
+            self.__current_uri = uri
             self.__mounttracker.call('ListMounts', None,
                                      Gio.DBusCallFlags.NO_AUTO_START,
                                      500, None, self.__on_list_mounts,
                                      uri)
         except Exception as e:
             print("GvfsdFix::__unmount_share():", e)
+            self.__current_uri = None
             GLib.idle_add(self.__unmount_shares)
 
     def __on_list_mounts(self, src, res, uri):
@@ -129,6 +135,7 @@ class GvfsdFix:
                       500, None, self.__on_unmount, uri)
         except Exception as e:
             print("GvfsdFix::__on_list_mounts():", e)
+            self.__current_uri = None
             GLib.idle_add(self.__unmount_shares)
 
     def __on_unmount(self, src, res, uri):
@@ -147,7 +154,9 @@ class GvfsdFix:
                 f.load_contents_async(None, None)
             except:
                 pass
+            self.__current_uri = None
             GLib.idle_add(self.__unmount_shares)
         except Exception as e:
             print("GvfsdFix::__on_unmount():", e)
+            self.__current_uri = None
             GLib.idle_add(self.__unmount_shares)

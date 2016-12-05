@@ -30,6 +30,7 @@ class WebJmg90:
             @return content uri as str/None
         """
         try:
+            Lp().gvfsd_fix.del_uri(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
@@ -84,6 +85,7 @@ class WebJmg90:
         try:
             uri = "http://app.jgm90.com/cmapi/search/"\
                   "%s/1/10" % search
+            Lp().gvfsd_fix.del_uri(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:

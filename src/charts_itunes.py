@@ -218,6 +218,7 @@ class ItunesCharts:
         try:
             debug("ItunesCharts::__get_album(): %s" % itunes_id)
             url = self.__INFO % (itunes_id, language)
+            Lp().gvfsd_fix.del_uri(url)
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents(self.__cancel)
             if status:
@@ -262,6 +263,7 @@ class ItunesCharts:
         """
         items = []
         try:
+            Lp().gvfsd_fix.del_uri(url)
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents(self.__cancel)
             if status:

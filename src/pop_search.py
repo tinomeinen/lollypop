@@ -434,6 +434,7 @@ class SearchPopover(Gtk.Popover):
             @param row as SearchRow
         """
         try:
+            Lp().gvfsd_fix.del_uri(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:

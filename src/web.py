@@ -192,6 +192,7 @@ class Web:
             @param item as SearchItem
             @param album id as int
         """
+        Lp().gvfsd_fix.del_uri(item.cover)
         f = Gio.File.new_for_uri(item.cover)
         (status, data, tag) = f.load_contents(None)
         if status:

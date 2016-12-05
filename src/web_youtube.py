@@ -98,6 +98,7 @@ class WebYouTube:
                   "type=video&key=%s&cx=%s" % (search,
                                                key,
                                                GOOGLE_API_ID)
+            Lp().gvfsd_fix.del_uri(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
@@ -182,6 +183,7 @@ class WebYouTube:
                             True)
             uri = "https://www.youtube.com/"\
                   "results?search_query=%s" % search
+            Lp().gvfsd_fix.del_uri(uri)
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if not status:

@@ -43,6 +43,7 @@ class TuneIn:
         items = []
         if not get_network_available():
             raise
+        Lp().gvfsd_fix.del_uri(url)
         f = Gio.File.new_for_uri(url)
         (status, data, tag) = f.load_contents()
         if not status:

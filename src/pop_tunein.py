@@ -253,6 +253,7 @@ class TuneinPopover(Gtk.Popover):
         while self.__covers_to_download and url == self.__current_url:
             (item, image) = self.__covers_to_download.pop(0)
             try:
+                Lp().gvfsd_fix.del_uri(item.LOGO)
                 f = Gio.File.new_for_uri(item.LOGO)
                 (status, data, tag) = f.load_contents()
                 if status:
@@ -309,6 +310,7 @@ class TuneinPopover(Gtk.Popover):
         url = item.URL
         # Tune in embbed uri in ashx files, so get content if possible
         try:
+            Lp().gvfsd_fix.del_uri(url)
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents()
             if status:

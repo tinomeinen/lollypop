@@ -121,6 +121,7 @@ class RadioPopover(Gtk.Popover):
             url = self._urls.pop()
             stream = None
             try:
+                Lp().gvfsd_fix.del_uri(url)
                 f = Gio.File.new_for_uri(url)
                 (status, data, tag) = f.load_contents()
                 if status:
