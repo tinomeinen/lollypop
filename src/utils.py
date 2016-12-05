@@ -60,8 +60,9 @@ def kill_gfvsd_cache(uri):
                                           0),),
                             Gio.DBusCallFlags.NO_AUTO_START,
                             500, None)
-            except Exception as e:
-                print("kill_gfvsd_cache():", e)
+            except:
+                debug("do_kill(): Retry %s" % uri)
+                GLib.timeout_add(5000, do_kill_thread, uri)
 
         def do_kill_thread(uri):
             t = Thread(target=do_kill, args=(uri,))
