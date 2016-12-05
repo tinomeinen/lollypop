@@ -126,7 +126,7 @@ class GvfsdFix:
             f = Gio.File.new_for_uri(uri)
             # Needed to force gvfs to invalidate cache
             try:
-                f.load_contents_async(None, None)
+                f.delete()
             except:
                 pass
             del self.__times[_time]
