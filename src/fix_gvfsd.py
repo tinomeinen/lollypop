@@ -27,7 +27,7 @@ class GvfsdFix:
             Init workaround
         """
         self.__uris = []
-        self.__currrent_uri = None
+        self.__current_uri = None
         self.__deleting = False
         self.__bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         self.__mounttracker = Gio.DBusProxy.new_sync(
