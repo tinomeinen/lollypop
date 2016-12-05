@@ -17,7 +17,7 @@ from gettext import gettext as _
 
 from lollypop.cache import InfoCache
 from lollypop.define import Lp, ArtSize, Type
-from lollypop.utils import get_network_available, kill_gvfsd_cache
+from lollypop.utils import get_network_available
 
 
 class ArtworkSearch(Gtk.Bin):
@@ -248,7 +248,7 @@ class ArtworkSearch(Gtk.Bin):
                 f = Gio.File.new_for_uri(url)
                 (status, data, tag) = f.load_contents()
                 if status:
-                    kill_gvfsd_cache(url)
+                    Lp().gvfsd_fix.add_uri(url)
                     GLib.idle_add(self.__add_pixbuf, data)
             except Exception as e:
                 print("ArtworkSearch::__add_pixbufs: %s" % e)

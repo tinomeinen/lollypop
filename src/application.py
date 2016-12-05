@@ -49,6 +49,7 @@ from lollypop.database_genres import GenresDatabase
 from lollypop.database_tracks import TracksDatabase
 from lollypop.playlists import Playlists
 from lollypop.objects import Album
+from lollypop.fix_gvfsd import GvfsdFix
 from lollypop.collectionscanner import CollectionScanner
 
 
@@ -136,6 +137,7 @@ class Application(Gtk.Application):
         self.scanner = CollectionScanner()
         self.art = Art()
         self.art.update_art_size()
+        self.gvfsd_fix = GvfsdFix()
         if self.settings.get_value('artist-artwork'):
             GLib.timeout_add(5000, self.art.cache_artists_info)
         if LastFM is not None:

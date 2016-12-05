@@ -20,7 +20,7 @@ from csv import reader
 from lollypop.search_spotify import SpotifySearch
 from lollypop.web import Web
 from lollypop.define import DbPersistent, Lp
-from lollypop.utils import debug, get_network_available, kill_gvfsd_cache
+from lollypop.utils import debug, get_network_available
 
 
 class SpotifyCharts:
@@ -113,7 +113,7 @@ class SpotifyCharts:
         try:
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents(self.__cancel)
-            kill_gvfsd_cache(url)
+            Lp().gvfsd_fix.add_uri(url)
             if not status or self._stop:
                 return []
             for line in data.decode("utf-8").split('\n'):

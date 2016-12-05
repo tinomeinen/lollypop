@@ -13,7 +13,9 @@
 from gi.repository import Gio
 
 import xml.etree.ElementTree as xml
-from lollypop.utils import get_network_available, kill_gvfsd_cache
+
+from lollypop.utils import get_network_available
+from lollypop.define import Lp
 
 
 class TuneItem:
@@ -45,7 +47,7 @@ class TuneIn:
         (status, data, tag) = f.load_contents()
         if not status:
             raise
-        kill_gvfsd_cache(url)
+        Lp().gvfsd_fix.add_uri(url)
         root = xml.fromstring(data)
         for child in root.iter('outline'):
             try:

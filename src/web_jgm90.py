@@ -14,7 +14,8 @@ from gi.repository import GLib, Gio
 
 import json
 
-from lollypop.utils import escape, kill_gvfsd_cache
+from lollypop.define import Lp
+from lollypop.utils import escape
 
 
 class WebJmg90:
@@ -32,7 +33,7 @@ class WebJmg90:
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
-                kill_gvfsd_cache(uri)
+                Lp().gvfsd_fix.add_uri(uri)
                 return data.decode('utf-8')
         except IndexError:
             pass
@@ -86,7 +87,7 @@ class WebJmg90:
             f = Gio.File.new_for_uri(uri)
             (status, data, tag) = f.load_contents(None)
             if status:
-                kill_gvfsd_cache(uri)
+                Lp().gvfsd_fix.add_uri(uri)
                 decode = json.loads(data.decode('utf-8'))
                 for song in decode['result']['songs']:
                     try:

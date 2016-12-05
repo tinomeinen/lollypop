@@ -19,7 +19,7 @@ from lollypop.radios import Radios
 from lollypop.tunein import TuneIn
 from lollypop.define import Lp, ArtSize, WindowSize
 from lollypop.art import Art
-from lollypop.utils import get_network_available, kill_gvfsd_cache
+from lollypop.utils import get_network_available
 
 
 class TuneinPopover(Gtk.Popover):
@@ -256,7 +256,7 @@ class TuneinPopover(Gtk.Popover):
                 f = Gio.File.new_for_uri(item.LOGO)
                 (status, data, tag) = f.load_contents()
                 if status:
-                    kill_gvfsd_cache(item.LOGO)
+                    Lp().gvfsd_fix.add_uri(item.LOGO)
                     stream = Gio.MemoryInputStream.new_from_data(data, None)
                     if stream is not None:
                         GLib.idle_add(self.__set_image, image, stream)
@@ -312,7 +312,7 @@ class TuneinPopover(Gtk.Popover):
             f = Gio.File.new_for_uri(url)
             (status, data, tag) = f.load_contents()
             if status:
-                kill_gvfsd_cache(url)
+                Lp().gvfsd_fix.add_uri(url)
                 url = data.decode('utf-8').split('\n')[0]
         except Exception as e:
             print("TuneinPopover::_add_radio: %s" % e)
