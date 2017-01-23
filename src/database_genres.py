@@ -103,16 +103,9 @@ class GenresDatabase:
             @return [(id as int, name as string)]
         """
         with SqlCursor(Lp().db) as sql:
-            result = sql.execute("SELECT DISTINCT genres.rowid, genres.name\
-                                  FROM genres,album_genres AS AG\
-                                  WHERE AG.genre_id=genres.rowid\
-                                  AND ? NOT IN (\
-                                    SELECT album_genres.genre_id\
-                                    FROM album_genres\
-                                    WHERE AG.album_id=album_genres.album_id)\
-                                  ORDER BY genres.name\
-                                  COLLATE NOCASE COLLATE LOCALIZED",
-                                 (Type.CHARTS,))
+            result = sql.execute("SELECT rowid, name FROM genres\
+                                  ORDER BY name\
+                                  COLLATE NOCASE COLLATE LOCALIZED")
             return list(result)
 
     def get_ids(self):
@@ -121,16 +114,9 @@ class GenresDatabase:
             @return [id as int]
         """
         with SqlCursor(Lp().db) as sql:
-            result = sql.execute("SELECT DISTINCT genres.rowid\
-                                  FROM genres,album_genres AS AG\
-                                  WHERE AG.genre_id=genres.rowid\
-                                  AND ? NOT IN (\
-                                    SELECT album_genres.genre_id\
-                                    FROM album_genres\
-                                    WHERE AG.album_id=album_genres.album_id)\
-                                  ORDER BY genres.name\
-                                  COLLATE NOCASE COLLATE LOCALIZED",
-                                 (Type.CHARTS,))
+            result = sql.execute("SELECT rowid FROM genres\
+                                  ORDER BY name\
+                                  COLLATE NOCASE COLLATE LOCALIZED")
             return list(itertools.chain(*result))
 
     def clean(self, genre_id):

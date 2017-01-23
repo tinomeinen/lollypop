@@ -55,39 +55,35 @@ class Web(GObject.Object):
         GObject.Object.__init__(self)
         self.__helpers = [WebJmg90(), WebYouTube()]
 
-    def save_track(self, item, persistent, genre):
+    def save_track(self, item, persistent):
         """
             Save item into collection as track
             @param item as SearchItem
             @param persistent as DbPersistent
-            @param genre as str
         """
-        t = Thread(target=self.__save_track_thread,
-                   args=(item, persistent, genre))
+        t = Thread(target=self.__save_track_thread, args=(item, persistent))
         t.daemon = True
         t.start()
 
-    def save_album(self, item, persistent, genre):
+    def save_album(self, item, persistent):
         """
             Save item into collection as album
             @param item as SearchItem
             @param persistent as DbPersistent
-            @param genre as str
         """
         t = Thread(target=self.__save_album_thread,
-                   args=(item, persistent, genre))
+                   args=(item, persistent))
         t.daemon = True
         t.start()
 
 #######################
 # PRIVATE             #
 #######################
-    def __save_album_thread(self, item, persistent, genre):
+    def __save_album_thread(self, item, persistent):
         """
             Save item into collection as album
             @param item as SearchItem
             @param persistent as DbPersistent
-            @param genre as str
         """
         nb_items = len(item.subitems)
         # Should not happen but happen :-/
@@ -98,7 +94,7 @@ class Web(GObject.Object):
         album_id = None
         for track_item in item.subitems:
             (album_id, track_id) = self.__save_track(track_item, persistent,
-                                                     album_artist, genre)
+                                                     album_artist)
             if track_id is None:
                 continue
             # Download cover
@@ -114,16 +110,15 @@ class Web(GObject.Object):
         if album_id is not None:
             GLib.idle_add(self.emit, "saved", album_id)
 
-    def __save_track_thread(self, item, persistent, genre):
+    def __save_track_thread(self, item, persistent):
         """
             Save item into collection as track
             @param item as SearchItem
             @param persistent as DbPersistent
-            @param genre as str
         """
         album_artist = item.artists[0]
         (album_id, track_id) = self.__save_track(item, persistent,
-                                                 album_artist, genre)
+                                                 album_artist)
         if track_id is None:
             return
         self.__save_cover(item, album_id)
@@ -131,13 +126,12 @@ class Web(GObject.Object):
             Lp().art.cache_artists_info()
         GLib.idle_add(self.emit, "saved", track_id)
 
-    def __save_track(self, item, persistent, album_artist, genre):
+    def __save_track(self, item, persistent, album_artist):
         """
             Save item into collection as track
             @param item as SearchItem
             @param persistent as DbPersistent
             @param album artist as str
-            @param genre as str
             @return (album id as int, track id as int)
         """
         # Get uri from helpers
@@ -170,12 +164,12 @@ class Web(GObject.Object):
             if new_album:
                 Lp().albums.set_synced(album_id, Type.NONE)
 
-            genre_ids = t.add_genres(genre, album_id)
             if persistent == DbPersistent.CHARTS:
-                genre_ids.append(Type.CHARTS)
+                genre_ids = [Type.CHARTS]
                 new_artist_ids = []
             else:
                 new_artist_ids = list(set(artist_ids) | set(album_artist_ids))
+                genre_ids = t.add_genres("Web", album_id)
 
             # Add track to db
             track_id = Lp().tracks.add(item.name, uri, item.duration,
@@ -185,13 +179,10 @@ class Web(GObject.Object):
             t.update_album(album_id, album_artist_ids, genre_ids, None)
             sql.commit()
 
-        if persistent != DbPersistent.CHARTS:
-            for genre_id in genre_ids:
-                GLib.idle_add(Lp().scanner.emit,
-                              'genre-updated', genre_id, True)
-            for artist_id in new_artist_ids:
-                GLib.idle_add(Lp().scanner.emit,
-                              'artist-updated', artist_id, True)
+        for genre_id in genre_ids:
+            GLib.idle_add(Lp().scanner.emit, 'genre-updated', genre_id, True)
+        for artist_id in new_artist_ids:
+            GLib.idle_add(Lp().scanner.emit, 'artist-updated', artist_id, True)
         return (album_id, track_id)
 
     def __save_cover(self, item, album_id):
